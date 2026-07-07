@@ -1,0 +1,86 @@
+{
+  "chunks": [
+    {
+      "text": "# API Reference\n\nThe Biome API exposes endpoints for project creation and deployment.\n\n## Authentication\n\nSet the `BIOME_API_KEY` environment variable before calling the API.\n\n## Error Codes\n\n- `E1001` for invalid credentials.\n- `E2002` for missing deployment targets.\n",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "API Reference",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 269
+    },
+    {
+      "text": "# API Reference\n\nThe Biome API exposes endpoints for project creation and deployment.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "API Reference",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "structure",
+      "character_count": 85
+    },
+    {
+      "text": "## Authentication\n\nSet the `BIOME_API_KEY` environment variable before calling the API.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "API Reference",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "structure",
+      "character_count": 87
+    },
+    {
+      "text": "## Error Codes\n\n- `E1001` for invalid credentials.\n- `E2002` for missing deployment targets.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "API Reference",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "structure",
+      "character_count": 92
+    },
+    {
+      "text": "# Onboarding Guide\n\nWelcome to Biome Cloud. New engineers should start by creating their workspace and installing the CLI.\n\n## Setup\n\nRun the following commands:\n\n- `biome auth login`\n- `biome project init`\n\nIf authentication fails, verify the API token is present in the environment.\n\n## Troubleshooting\n\nCommon issues include expired tokens and missing network access.\n",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 371
+    },
+    {
+      "text": "# Onboarding Guide\n\nWelcome to Biome Cloud. New engineers should start by creating their workspace and installing the CLI.",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "structure",
+      "character_count": 122
+    },
+    {
+      "text": "## Setup\n\nRun the following commands:\n\n- `biome auth login`\n- `biome project init`\n\nIf authentication fails, verify the API token is present in the environment.",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "structure",
+      "character_count": 160
+    },
+    {
+      "text": "## Troubleshooting\n\nCommon issues include expired tokens and missing network access.",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "structure",
+      "character_count": 84
+    }
+  ],
+  "summary": {
+    "documents_processed": 2,
+    "chunks_created": 8,
+    "chunks_per_strategy": {
+      "fixed": 2,
+      "structure": 6,
+      "semantic": 0
+    },
+    "duplicates_skipped": 2
+  }
+}
