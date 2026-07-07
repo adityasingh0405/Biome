@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  api:
+    image: python:3.11-slim
+    working_dir: /app
+    command: sh -c "pip install -r requirements.txt && python app.py"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - chroma
+
+  dashboard:
+    image: python:3.11-slim
+    working_dir: /app
+    command: sh -c "pip install -r requirements.txt streamlit && streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0"
+    volumes:
+      - .:/app
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    ports:
+      - "8001:8000"
