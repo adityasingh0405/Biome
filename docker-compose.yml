@@ -21,6 +21,8 @@ services:
       - "8501:8501"
     depends_on:
       - api
+    environment:
+      API_BASE: http://api:8000
 
   chroma:
     image: ghcr.io/chroma-core/chroma:latest
