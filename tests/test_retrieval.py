@@ -1,3 +1,4 @@
+from biome_rag.retrieval.bm25 import BM25Index
 from biome_rag.retrieval.engine import HybridRetriever, reciprocal_rank_fusion
 from biome_rag.retrieval.models import RankedChunk
 
@@ -23,3 +24,15 @@ def test_reranker_prefers_keyword_overlap(tmp_path):
     ranked = retriever.reranker.rerank("authentication error", retriever.chunk_store.chunks[:2])
 
     assert ranked[0].text.startswith("Authentication")
+
+
+def test_bm25_index_persists_and_reloads(tmp_path):
+    path = tmp_path / "bm25.pkl"
+    index = BM25Index(path)
+    index.build(["Authentication token required", "Deployment target missing"])
+    index.save()
+
+    reloaded = BM25Index(path)
+    reloaded.load()
+
+    assert reloaded.search("authentication", top_k=1)[0][0] == 0

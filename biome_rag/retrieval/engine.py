@@ -4,6 +4,7 @@ import math
 from pathlib import Path
 from typing import Any
 
+from .bm25 import BM25Index
 from .models import RankedChunk
 from .stores import ChunkStore
 
@@ -67,11 +68,16 @@ class HybridRetriever:
         self.dense_scorer = DenseScorer()
         self.sparse_scorer = SparseScorer()
         self.reranker = Reranker()
+        self.bm25_index = BM25Index(self.storage_dir / "bm25_index.pkl")
 
     def retrieve(self, query: str, top_k: int = 5) -> list[RankedChunk]:
         chunks = self.chunk_store.get_chunks()
         dense_scores = [(chunk, self.dense_scorer.score(query, chunk)) for chunk in chunks]
         sparse_scores = [(chunk, self.sparse_scorer.score(query, chunk)) for chunk in chunks]
+        if self.bm25_index.documents:
+            bm25_results = self.bm25_index.search(query, top_k=10)
+            sparse_ids = {self._to_identifier(chunks[doc_id]): score for doc_id, score in bm25_results if doc_id < len(chunks)}
+            sparse_scores = [(chunk, sparse_ids.get(self._to_identifier(chunk), 0.0)) for chunk in chunks]
         dense_ranks = [self._to_identifier(chunk) for chunk, _ in sorted(dense_scores, key=lambda item: item[1], reverse=True)[:10]]
         sparse_ranks = [self._to_identifier(chunk) for chunk, _ in sorted(sparse_scores, key=lambda item: item[1], reverse=True)[:10]]
         fused = reciprocal_rank_fusion(dense_ranks, sparse_ranks)

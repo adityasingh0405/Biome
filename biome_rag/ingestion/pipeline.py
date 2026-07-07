@@ -9,6 +9,7 @@ from .chunkers import Chunker, FixedSizeChunker, SemanticChunker, StructureAware
 from .dedup import Deduplicator
 from .loaders import load_documents
 from .models import Chunk, IngestionConfig, IngestionSummary, NormalizedDocument
+from ..retrieval.bm25 import BM25Index
 
 
 class IngestionPipeline:
@@ -65,8 +66,9 @@ class IngestionPipeline:
         output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
         bm25_path = self.config.storage_dir / "bm25_index.pkl"
-        with bm25_path.open("wb") as handle:
-            pickle.dump({"chunks": [chunk.text for chunk in chunks]}, handle)
+        bm25_index = BM25Index(bm25_path)
+        bm25_index.build([chunk.text for chunk in chunks])
+        bm25_index.save()
 
     def _chunk_to_dict(self, chunk: Chunk) -> dict[str, object]:
         return {
