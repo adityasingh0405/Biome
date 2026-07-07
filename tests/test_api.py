@@ -17,6 +17,8 @@ def test_api_endpoints_return_expected_shapes(tmp_path: Path):
         json={"documents": [{"text": "Use the API token.", "source": "sample.md"}]},
     )
     assert ingest_response.status_code == 200
+    assert (tmp_path / "processed" / "chunks.json").exists()
+    assert (tmp_path / "index" / "bm25_index.pkl").exists()
 
     ask_response = client.post("/v1/ask", json={"question": "What should I use?"})
     assert ask_response.status_code == 200
