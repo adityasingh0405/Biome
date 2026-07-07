@@ -1,0 +1,4 @@
+{"question": "How do I authenticate with the Biome API?", "golden_answer": "Set the BIOME_API_KEY environment variable before calling the API.", "expected_chunk_ids": ["api-reference.md:0"]}
+{"question": "What should I do if authentication fails?", "golden_answer": "Verify the API token is present in the environment.", "expected_chunk_ids": ["onboarding.md:0"]}
+{"question": "What error code signals invalid credentials?", "golden_answer": "E1001 indicates invalid credentials.", "expected_chunk_ids": ["api-reference.md:1"]}
+{"question": "What is the deployment target error code?", "golden_answer": "E2002 indicates a missing deployment target.", "expected_chunk_ids": ["api-reference.md:2"]}
