@@ -1,86 +1,1877 @@
 {
   "chunks": [
     {
-      "text": "# API Reference\n\nThe Biome API exposes endpoints for project creation and deployment.\n\n## Authentication\n\nSet the `BIOME_API_KEY` environment variable before calling the API.\n\n## Error Codes\n\n- `E1001` for invalid credentials.\n- `E2002` for missing deployment targets.\n",
+      "text": "# Biome API Reference\n\n## Authentication\n\nAll API requests must include the `BIOME_API_KEY` environment variable set in your environment before calling the API. Pass the key in the `Authorization` header as `Bearer <BIOME_API_KEY>`.\n\n```\nAuthorization: Bearer <your-api-key>\n```\n\nIf the key is missing or invalid, the API returns HTTP 401 with error code `E1001`.\n\n## Error Codes\n\n### E1001 \u2014 Invalid Credentials\nReturned when the API key is missing, malformed, or revoked. Resolution: verify the `BIOME_API_KEY` environment variable is set and the token has not expired.\n\n### E1002 \u2014 Rate Limit Exceeded\nReturned when a client exceeds 100 requests per minute. Resolution: implement exponential backoff. Retry after the number of seconds indicated in the `Retry-After` header.\n\n### E2001 \u2014 Resource N",
       "source": "data\\raw\\api-reference.md",
-      "section_heading": "API Reference",
+      "section_heading": "Biome API Reference",
       "page_number": null,
       "chunk_index": 0,
       "chunking_strategy": "fixed",
-      "character_count": 269
+      "character_count": 800
     },
     {
-      "text": "# API Reference\n\nThe Biome API exposes endpoints for project creation and deployment.",
+      "text": "nt exponential backoff. Retry after the number of seconds indicated in the `Retry-After` header.\n\n### E2001 \u2014 Resource Not Found\nThe requested document, chunk, or collection does not exist. Resolution: verify the resource ID and ensure the corpus has been indexed.\n\n### E2002 \u2014 Missing Deployment Target\nReturned when a deployment operation is initiated without specifying a target environment. Resolution: set the `BIOME_DEPLOY_TARGET` environment variable to `staging`, `production`, or `dev`.\n\n### E3001 \u2014 Chunking Failed\nIngestion succeeded but chunking produced zero chunks. Resolution: verify the document is not empty and uses a supported format (Markdown, TXT, HTML, PDF).\n\n### E3002 \u2014 Index Out of Sync\nThe BM25 index and vector store contain a different number of chunks. Resolution: re-run",
       "source": "data\\raw\\api-reference.md",
-      "section_heading": "API Reference",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "\n\n### E3002 \u2014 Index Out of Sync\nThe BM25 index and vector store contain a different number of chunks. Resolution: re-run ingestion with `--force-reindex` to rebuild both indexes from scratch.\n\n## Endpoints\n\n### POST /v1/ask\nSubmit a question to the RAG pipeline.\n\n**Request body:**\n```json\n{\n  \"question\": \"string\",\n  \"retrieval_mode\": \"hybrid | dense | sparse\"\n}\n```\n\n**Response:**\n```json\n{\n  \"answer\": \"string\",\n  \"citations\": [{\"chunk_index\": 0, \"text\": \"string\", \"verified\": true}],\n  \"confidence\": {\n    \"retrieval_confidence\": 0.85,\n    \"citation_coverage\": 0.9,\n    \"completeness\": 0.7,\n    \"composite\": 0.83\n  },\n  \"retrieved_chunks\": [...]\n}\n```\n\n### GET /v1/documents\nList all indexed documents with their source paths and chunk counts.\n\n### POST /v1/ingest\nUpload new documents for indexi",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ist all indexed documents with their source paths and chunk counts.\n\n### POST /v1/ingest\nUpload new documents for indexing. Accepts a JSON array of `{source, text}` objects.\n\n### GET /v1/health\nReturns system health including indexed chunk count and storage paths.\n\n### GET /v1/compare\nRun the same query in both hybrid and dense-only mode. Returns both result sets for comparison.\n\n## Rate Limits\n\n| Plan | Requests/minute | Requests/day |\n|------|----------------|-------------|\n| Free | 20 | 500 |\n| Pro | 100 | 10,000 |\n| Enterprise | Unlimited | Unlimited |\n\n## Versioning\n\nThe API is versioned with `/v1/` prefix. Breaking changes are introduced in new versions. The current stable version is `v1`.\n",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 705
+    },
+    {
+      "text": "# Biome API Reference",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
       "page_number": null,
       "chunk_index": 0,
       "chunking_strategy": "structure",
-      "character_count": 85
+      "character_count": 21
     },
     {
-      "text": "## Authentication\n\nSet the `BIOME_API_KEY` environment variable before calling the API.",
+      "text": "## Authentication\n\nAll API requests must include the `BIOME_API_KEY` environment variable set in your environment before calling the API. Pass the key in the `Authorization` header as `Bearer <BIOME_API_KEY>`.\n\n```\nAuthorization: Bearer <your-api-key>\n```\n\nIf the key is missing or invalid, the API returns HTTP 401 with error code `E1001`.",
       "source": "data\\raw\\api-reference.md",
-      "section_heading": "API Reference",
+      "section_heading": "Biome API Reference",
       "page_number": null,
       "chunk_index": 1,
       "chunking_strategy": "structure",
-      "character_count": 87
+      "character_count": 340
     },
     {
-      "text": "## Error Codes\n\n- `E1001` for invalid credentials.\n- `E2002` for missing deployment targets.",
+      "text": "## Error Codes",
       "source": "data\\raw\\api-reference.md",
-      "section_heading": "API Reference",
+      "section_heading": "Biome API Reference",
       "page_number": null,
       "chunk_index": 2,
       "chunking_strategy": "structure",
-      "character_count": 92
+      "character_count": 14
     },
     {
-      "text": "# Onboarding Guide\n\nWelcome to Biome Cloud. New engineers should start by creating their workspace and installing the CLI.\n\n## Setup\n\nRun the following commands:\n\n- `biome auth login`\n- `biome project init`\n\nIf authentication fails, verify the API token is present in the environment.\n\n## Troubleshooting\n\nCommon issues include expired tokens and missing network access.\n",
-      "source": "data\\raw\\onboarding.md",
-      "section_heading": "Onboarding Guide",
+      "text": "### E1001 \u2014 Invalid Credentials\nReturned when the API key is missing, malformed, or revoked. Resolution: verify the `BIOME_API_KEY` environment variable is set and the token has not expired.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "structure",
+      "character_count": 190
+    },
+    {
+      "text": "### E1002 \u2014 Rate Limit Exceeded\nReturned when a client exceeds 100 requests per minute. Resolution: implement exponential backoff. Retry after the number of seconds indicated in the `Retry-After` header.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "structure",
+      "character_count": 203
+    },
+    {
+      "text": "### E2001 \u2014 Resource Not Found\nThe requested document, chunk, or collection does not exist. Resolution: verify the resource ID and ensure the corpus has been indexed.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "structure",
+      "character_count": 166
+    },
+    {
+      "text": "### E2002 \u2014 Missing Deployment Target\nReturned when a deployment operation is initiated without specifying a target environment. Resolution: set the `BIOME_DEPLOY_TARGET` environment variable to `staging`, `production`, or `dev`.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "structure",
+      "character_count": 229
+    },
+    {
+      "text": "### E3001 \u2014 Chunking Failed\nIngestion succeeded but chunking produced zero chunks. Resolution: verify the document is not empty and uses a supported format (Markdown, TXT, HTML, PDF).",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 7,
+      "chunking_strategy": "structure",
+      "character_count": 183
+    },
+    {
+      "text": "### E3002 \u2014 Index Out of Sync\nThe BM25 index and vector store contain a different number of chunks. Resolution: re-run ingestion with `--force-reindex` to rebuild both indexes from scratch.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 8,
+      "chunking_strategy": "structure",
+      "character_count": 189
+    },
+    {
+      "text": "## Endpoints",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 9,
+      "chunking_strategy": "structure",
+      "character_count": 12
+    },
+    {
+      "text": "### POST /v1/ask\nSubmit a question to the RAG pipeline.\n\n**Request body:**\n```json\n{\n  \"question\": \"string\",\n  \"retrieval_mode\": \"hybrid | dense | sparse\"\n}\n```\n\n**Response:**\n```json\n{\n  \"answer\": \"string\",\n  \"citations\": [{\"chunk_index\": 0, \"text\": \"string\", \"verified\": true}],\n  \"confidence\": {\n    \"retrieval_confidence\": 0.85,\n    \"citation_coverage\": 0.9,\n    \"completeness\": 0.7,\n    \"composite\": 0.83\n  },\n  \"retrieved_chunks\": [...]\n}\n```",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 10,
+      "chunking_strategy": "structure",
+      "character_count": 448
+    },
+    {
+      "text": "### GET /v1/documents\nList all indexed documents with their source paths and chunk counts.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 11,
+      "chunking_strategy": "structure",
+      "character_count": 90
+    },
+    {
+      "text": "### POST /v1/ingest\nUpload new documents for indexing. Accepts a JSON array of `{source, text}` objects.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 12,
+      "chunking_strategy": "structure",
+      "character_count": 104
+    },
+    {
+      "text": "### GET /v1/health\nReturns system health including indexed chunk count and storage paths.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 13,
+      "chunking_strategy": "structure",
+      "character_count": 89
+    },
+    {
+      "text": "### GET /v1/compare\nRun the same query in both hybrid and dense-only mode. Returns both result sets for comparison.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 14,
+      "chunking_strategy": "structure",
+      "character_count": 115
+    },
+    {
+      "text": "## Rate Limits\n\n| Plan | Requests/minute | Requests/day |\n|------|----------------|-------------|\n| Free | 20 | 500 |\n| Pro | 100 | 10,000 |\n| Enterprise | Unlimited | Unlimited |",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 15,
+      "chunking_strategy": "structure",
+      "character_count": 179
+    },
+    {
+      "text": "## Versioning\n\nThe API is versioned with `/v1/` prefix. Breaking changes are introduced in new versions. The current stable version is `v1`.",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 16,
+      "chunking_strategy": "structure",
+      "character_count": 140
+    },
+    {
+      "text": "### E2001 \u2014 Resource Not Found\nThe requested document, chunk, or collection does not exist. Resolution: verify the resource ID and ensure the corpus has been indexed. ### E2002 \u2014 Missing Deployment Target\nReturned when a deployment operation is initiated without specifying a target environment. Resolution: set the `BIOME_DEPLOY_TARGET` environment variable to `staging`, `production`, or `dev`. ### E3001 \u2014 Chunking Failed\nIngestion succeeded but chunking produced zero chunks. Resolution: verify the document is not empty and uses a supported format (Markdown, TXT, HTML, PDF). ### E3002 \u2014 Index Out of Sync\nThe BM25 index and vector store contain a different number of chunks. Resolution: re-run ingestion with `--force-reindex` to rebuild both indexes from scratch",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 769
+    },
+    {
+      "text": "## Endpoints\n\n### POST /v1/ask\nSubmit a question to the RAG pipeline. **Request body:**\n```json\n{\n  \"question\": \"string\",\n  \"retrieval_mode\": \"hybrid | dense | sparse\"\n}\n```\n\n**Response:**\n```json\n{\n  \"answer\": \"string\",\n  \"citations\": [{\"chunk_index\": 0, \"text\": \"string\", \"verified\": true}],\n  \"confidence\": {\n    \"retrieval_confidence\": 0. 85,\n    \"citation_coverage\": 0. 9,\n    \"completeness\": 0. 7,\n    \"composite\": 0. 83\n  },\n  \"retrieved_chunks\": [. ]\n}\n```\n\n### GET /v1/documents\nList all indexed documents with their source paths and chunk counts. ### POST /v1/ingest\nUpload new documents for indexing. Accepts a JSON array of `{source, text}` objects. ### GET /v1/health\nReturns system health including indexed chunk count and storage paths",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 750
+    },
+    {
+      "text": "### GET /v1/compare\nRun the same query in both hybrid and dense-only mode. Returns both result sets for comparison. ## Rate Limits\n\n| Plan | Requests/minute | Requests/day |\n|------|----------------|-------------|\n| Free | 20 | 500 |\n| Pro | 100 | 10,000 |\n| Enterprise | Unlimited | Unlimited |\n\n## Versioning\n\nThe API is versioned with `/v1/` prefix. Breaking changes are introduced in new versions. The current stable version is `v1`",
+      "source": "data\\raw\\api-reference.md",
+      "section_heading": "Biome API Reference",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 436
+    },
+    {
+      "text": "# Architecture Overview\n\n## System Design\n\nBiome RAG follows a modular pipeline architecture with clear separation between ingestion, retrieval, generation, and evaluation layers.\n\n## Component Diagram\n\n```\nRaw Documents (md, txt, html, pdf)\n        \u2502\n        \u25bc\n  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n  \u2502         Ingestion Pipeline           \u2502\n  \u2502  Loaders \u2192 Chunkers \u2192 Deduplication \u2502\n  \u2502  Fixed / Structure / Semantic        \u2502\n  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n            \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n            \u2502                    \u2502\n     \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n     \u2502  BM25 Index \u2502    \u2502 Chroma Vector\u2502\n     \u2502  (sparse)   \u2502    \u2502  Store (dense)\u2502\n     \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n            \u2502                    \u2502\n            \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
       "page_number": null,
       "chunk_index": 0,
       "chunking_strategy": "fixed",
-      "character_count": 371
+      "character_count": 800
     },
     {
-      "text": "# Onboarding Guide\n\nWelcome to Biome Cloud. New engineers should start by creating their workspace and installing the CLI.",
-      "source": "data\\raw\\onboarding.md",
-      "section_heading": "Onboarding Guide",
+      "text": "re (dense)\u2502\n     \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n            \u2502                    \u2502\n            \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502   Reciprocal Rank    \u2502\n           \u2502   Fusion (RRF)       \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502  Cross-Encoder       \u2502\n           \u2502  Reranker            \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502  Answer Builder      \u2502\n           \u2502  LLM + Citations     \u2502\n           \u2502  + Confidence Score  \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n               \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n          ",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "onfidence Score  \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n               \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n               \u2502              \u2502\n        \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n        \u2502 FastAPI  \u2502    \u2502  Streamlit  \u2502\n        \u2502  /v1/*   \u2502    \u2502  Dashboard  \u2502\n        \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n## Design Decisions\n\n### Why ChromaDB?\n\nChromaDB provides file-based persistence with no external service dependency. It handles embedding storage, cosine similarity search, and metadata filtering out of the box. For a single-machine deployment, it is the simplest path to a fully persistent vector store.\n\n### Why Reciprocal Rank Fusion over score normalisation?\n\nScore normalisation (e.g., min-max scaling) requires knowing the range of both BM25 and cosine similarity scores, which vary unpr",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "malisation (e.g., min-max scaling) requires knowing the range of both BM25 and cosine similarity scores, which vary unpredictably across corpora. RRF only requires rank order, which is corpus-agnostic and produces consistently good results.\n\n### Why a cross-encoder reranker?\n\nBi-encoder embeddings (used for initial retrieval) encode query and document independently, sacrificing some accuracy for speed. Cross-encoders attend to both query and document jointly, catching fine-grained relevance signals. Running the cross-encoder over only the top-20 fused candidates keeps latency manageable.\n\n### Why three chunking strategies?\n\nDifferent documents benefit from different chunking strategies. Markdown documentation benefits from structure-aware chunking that respects headings. Long prose benefit",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ing strategies. Markdown documentation benefits from structure-aware chunking that respects headings. Long prose benefits from fixed-size chunking with overlap to avoid losing context at boundaries. Semantic chunking produces more coherent chunks but is more expensive. Running all three and deduplicating covers the strengths of each.\n\n## Data Flow\n\n1. A document enters `data/raw/`\n2. The appropriate loader extracts plain text with metadata\n3. All three chunkers split the text; near-duplicates are removed\n4. Chunks are stored in `data/processed/chunks.json`\n5. BM25 index is built and saved as `data/index/bm25_index.pkl`\n6. Dense embeddings are stored in ChromaDB at `data/index/chroma/`\n7. At query time, the HybridRetriever queries both indexes\n8. RRF combines the ranked lists; the cross-enc",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ndex/chroma/`\n7. At query time, the HybridRetriever queries both indexes\n8. RRF combines the ranked lists; the cross-encoder reranks the top-20\n9. The top-5 chunks are passed to the AnswerBuilder\n10. The LLM generates a grounded answer with `[n]` citations\n11. Citation verification flags any unsupported claims\n12. The response includes a composite confidence score\n\n## Latency Budget (per query, warm start)\n\n| Step | Typical latency |\n|------|----------------|\n| Dense retrieval (Chroma) | 50\u2013150ms |\n| Sparse retrieval (BM25) | <5ms |\n| RRF fusion | <1ms |\n| Cross-encoder reranking (5 chunks) | 100\u2013300ms |\n| LLM generation (Ollama local) | 3\u201315s |\n| LLM generation (GPT-4o-mini API) | 1\u20133s |\n| Citation verification | 50\u2013500ms |\n| **Total (Ollama)** | **~5\u201320s** |\n| **Total (API LLM)** | **~2\u2013",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ini API) | 1\u20133s |\n| Citation verification | 50\u2013500ms |\n| **Total (Ollama)** | **~5\u201320s** |\n| **Total (API LLM)** | **~2\u20135s** |\n",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "fixed",
+      "character_count": 127
+    },
+    {
+      "text": "# Architecture Overview",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
       "page_number": null,
       "chunk_index": 0,
       "chunking_strategy": "structure",
-      "character_count": 122
+      "character_count": 23
     },
     {
-      "text": "## Setup\n\nRun the following commands:\n\n- `biome auth login`\n- `biome project init`\n\nIf authentication fails, verify the API token is present in the environment.",
-      "source": "data\\raw\\onboarding.md",
-      "section_heading": "Onboarding Guide",
+      "text": "## System Design\n\nBiome RAG follows a modular pipeline architecture with clear separation between ingestion, retrieval, generation, and evaluation layers.",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
       "page_number": null,
       "chunk_index": 1,
       "chunking_strategy": "structure",
-      "character_count": 160
+      "character_count": 154
     },
     {
-      "text": "## Troubleshooting\n\nCommon issues include expired tokens and missing network access.",
-      "source": "data\\raw\\onboarding.md",
-      "section_heading": "Onboarding Guide",
+      "text": "## Component Diagram\n\n```\nRaw Documents (md, txt, html, pdf)\n        \u2502\n        \u25bc\n  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n  \u2502         Ingestion Pipeline           \u2502\n  \u2502  Loaders \u2192 Chunkers \u2192 Deduplication \u2502\n  \u2502  Fixed / Structure / Semantic        \u2502\n  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n            \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n            \u2502                    \u2502\n     \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n     \u2502  BM25 Index \u2502    \u2502 Chroma Vector\u2502\n     \u2502  (sparse)   \u2502    \u2502  Store (dense)\u2502\n     \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n            \u2502                    \u2502\n            \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502   Reciprocal Rank    \u2502\n           \u2502   Fusion (RRF)       \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
       "page_number": null,
       "chunk_index": 2,
       "chunking_strategy": "structure",
-      "character_count": 84
+      "character_count": 800
+    },
+    {
+      "text": " \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502   Reciprocal Rank    \u2502\n           \u2502   Fusion (RRF)       \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502  Cross-Encoder       \u2502\n           \u2502  Reranker            \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502  Answer Builder      \u2502\n           \u2502  LLM + Citations     \u2502\n           \u2502  + Confidence Score  \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n               \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n               \u2502              \u2502\n        \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n        \u2502 FastAPI  \u2502    \u2502  Streamlit  \u2502\n        \u2502  /v1/*   \u2502    \u2502  Dashboard  \u2502\n        \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "structure",
+      "character_count": 800
+    },
+    {
+      "text": "        \u2502 FastAPI  \u2502    \u2502  Streamlit  \u2502\n        \u2502  /v1/*   \u2502    \u2502  Dashboard  \u2502\n        \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "structure",
+      "character_count": 123
+    },
+    {
+      "text": "## Design Decisions",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "structure",
+      "character_count": 19
+    },
+    {
+      "text": "### Why ChromaDB?\n\nChromaDB provides file-based persistence with no external service dependency. It handles embedding storage, cosine similarity search, and metadata filtering out of the box. For a single-machine deployment, it is the simplest path to a fully persistent vector store.",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "structure",
+      "character_count": 284
+    },
+    {
+      "text": "### Why Reciprocal Rank Fusion over score normalisation?\n\nScore normalisation (e.g., min-max scaling) requires knowing the range of both BM25 and cosine similarity scores, which vary unpredictably across corpora. RRF only requires rank order, which is corpus-agnostic and produces consistently good results.",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 7,
+      "chunking_strategy": "structure",
+      "character_count": 307
+    },
+    {
+      "text": "### Why a cross-encoder reranker?\n\nBi-encoder embeddings (used for initial retrieval) encode query and document independently, sacrificing some accuracy for speed. Cross-encoders attend to both query and document jointly, catching fine-grained relevance signals. Running the cross-encoder over only the top-20 fused candidates keeps latency manageable.",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 8,
+      "chunking_strategy": "structure",
+      "character_count": 352
+    },
+    {
+      "text": "### Why three chunking strategies?\n\nDifferent documents benefit from different chunking strategies. Markdown documentation benefits from structure-aware chunking that respects headings. Long prose benefits from fixed-size chunking with overlap to avoid losing context at boundaries. Semantic chunking produces more coherent chunks but is more expensive. Running all three and deduplicating covers the strengths of each.",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 9,
+      "chunking_strategy": "structure",
+      "character_count": 419
+    },
+    {
+      "text": "## Data Flow\n\n1. A document enters `data/raw/`\n2. The appropriate loader extracts plain text with metadata\n3. All three chunkers split the text; near-duplicates are removed\n4. Chunks are stored in `data/processed/chunks.json`\n5. BM25 index is built and saved as `data/index/bm25_index.pkl`\n6. Dense embeddings are stored in ChromaDB at `data/index/chroma/`\n7. At query time, the HybridRetriever queries both indexes\n8. RRF combines the ranked lists; the cross-encoder reranks the top-20\n9. The top-5 chunks are passed to the AnswerBuilder\n10. The LLM generates a grounded answer with `[n]` citations\n11. Citation verification flags any unsupported claims\n12. The response includes a composite confidence score",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 10,
+      "chunking_strategy": "structure",
+      "character_count": 709
+    },
+    {
+      "text": "## Latency Budget (per query, warm start)\n\n| Step | Typical latency |\n|------|----------------|\n| Dense retrieval (Chroma) | 50\u2013150ms |\n| Sparse retrieval (BM25) | <5ms |\n| RRF fusion | <1ms |\n| Cross-encoder reranking (5 chunks) | 100\u2013300ms |\n| LLM generation (Ollama local) | 3\u201315s |\n| LLM generation (GPT-4o-mini API) | 1\u20133s |\n| Citation verification | 50\u2013500ms |\n| **Total (Ollama)** | **~5\u201320s** |\n| **Total (API LLM)** | **~2\u20135s** |",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 11,
+      "chunking_strategy": "structure",
+      "character_count": 438
+    },
+    {
+      "text": "## Component Diagram\n\n```\nRaw Documents (md, txt, html, pdf)\n        \u2502\n        \u25bc\n  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n  \u2502         Ingestion Pipeline           \u2502\n  \u2502  Loaders \u2192 Chunkers \u2192 Deduplication \u2502\n  \u2502  Fixed / Structure / Semantic        \u2502\n  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n            \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n            \u2502                    \u2502\n     \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n     \u2502  BM25 Index \u2502    \u2502 Chroma Vector\u2502\n     \u2502  (sparse)   \u2502    \u2502  Store (dense)\u2502\n     \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n            \u2502                    \u2502\n            \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502   Reciprocal Rank    \u2502\n           \u2502   Fusion (RRF)       \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502  Cross-Encoder       \u2502\n           \u2502  Reranker            \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n                      \u25bc\n           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n           \u2502  Answer Builder      \u2502\n           \u2502  LLM + Citations     \u2502\n           \u2502  + Confidence Score  \u2502\n           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                      \u2502\n               \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n               \u2502              \u2502\n        \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n        \u2502 FastAPI  \u2502    \u2502  Streamlit  \u2502\n        \u2502  /v1/*   \u2502    \u2502  Dashboard  \u2502\n        \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n## Design Decisions\n\n### Why ChromaDB?\n\nChromaDB provides file-based persistence with no external service dependency",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 1601
+    },
+    {
+      "text": "It handles embedding storage, cosine similarity search, and metadata filtering out of the box. For a single-machine deployment, it is the simplest path to a fully persistent vector store. ### Why Reciprocal Rank Fusion over score normalisation?\n\nScore normalisation (e. g. , min-max scaling) requires knowing the range of both BM25 and cosine similarity scores, which vary unpredictably across corpora. RRF only requires rank order, which is corpus-agnostic and produces consistently good results. ### Why a cross-encoder reranker?\n\nBi-encoder embeddings (used for initial retrieval) encode query and document independently, sacrificing some accuracy for speed. Cross-encoders attend to both query and document jointly, catching fine-grained relevance signals",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 759
+    },
+    {
+      "text": "Running the cross-encoder over only the top-20 fused candidates keeps latency manageable. ### Why three chunking strategies?\n\nDifferent documents benefit from different chunking strategies. Markdown documentation benefits from structure-aware chunking that respects headings. Long prose benefits from fixed-size chunking with overlap to avoid losing context at boundaries. Semantic chunking produces more coherent chunks but is more expensive. Running all three and deduplicating covers the strengths of each. ## Data Flow\n\n1. A document enters `data/raw/`\n2. The appropriate loader extracts plain text with metadata\n3. All three chunkers split the text; near-duplicates are removed\n4. Chunks are stored in `data/processed/chunks. json`\n5. BM25 index is built and saved as `data/index/bm25_index. pkl`\n6",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 803
+    },
+    {
+      "text": "Dense embeddings are stored in ChromaDB at `data/index/chroma/`\n7. At query time, the HybridRetriever queries both indexes\n8. RRF combines the ranked lists; the cross-encoder reranks the top-20\n9. The top-5 chunks are passed to the AnswerBuilder\n10. The LLM generates a grounded answer with `[n]` citations\n11. Citation verification flags any unsupported claims\n12",
+      "source": "data\\raw\\architecture.md",
+      "section_heading": "Architecture Overview",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "semantic",
+      "character_count": 364
+    },
+    {
+      "text": "Biome RAG Changelog\n\nVersion 0.3.0 \u2014 2026-08-01\n\nNew features:\n- Hybrid retrieval combining BM25 sparse search and ChromaDB dense vector search\n- Reciprocal Rank Fusion (RRF) for combining ranked lists from both retrieval paths\n- Cross-encoder reranker using ms-marco-MiniLM-L-6-v2 for final result scoring\n- Three chunking strategies: fixed-size, structure-aware, and semantic\n- Near-duplicate detection with configurable cosine similarity threshold\n- Confidence scoring: retrieval confidence, citation coverage, completeness, composite\n- Streamlit dashboard with hybrid vs dense-only comparison toggle\n- Docker Compose setup for one-command deployment\n\nBug fixes:\n- Fixed BM25 index not persisting correctly when storage directory is missing\n- Fixed ChromaDB collection name collision when running ",
+      "source": "data\\raw\\changelog.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ndex not persisting correctly when storage directory is missing\n- Fixed ChromaDB collection name collision when running multiple environments\n- Fixed citation parser not handling consecutive [n] markers correctly\n\nVersion 0.2.0 \u2014 2026-07-01\n\nNew features:\n- FastAPI backend with /v1/ask, /v1/documents, /v1/ingest, and /health endpoints\n- BM25 sparse index with custom implementation (no external dependency)\n- Basic citation extraction and rule-based verification\n- PDF support via pypdf\n\nBug fixes:\n- Fixed HTML loader stripping content inside code blocks\n- Fixed PDF page number extraction for numbered filenames\n\nVersion 0.1.0 \u2014 2026-06-01\n\nInitial release:\n- Basic ingestion pipeline with Markdown and text support\n- Fixed-size chunking\n- Simple keyword search (no vector store)\n- Command-line i",
+      "source": "data\\raw\\changelog.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "pipeline with Markdown and text support\n- Fixed-size chunking\n- Simple keyword search (no vector store)\n- Command-line interface for ingestion\n",
+      "source": "data\\raw\\changelog.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 143
+    },
+    {
+      "text": "Biome RAG Changelog\n\nVersion 0. 3",
+      "source": "data\\raw\\changelog.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "semantic",
+      "character_count": 33
+    },
+    {
+      "text": "0 \u2014 2026-08-01\n\nNew features:\n- Hybrid retrieval combining BM25 sparse search and ChromaDB dense vector search\n- Reciprocal Rank Fusion (RRF) for combining ranked lists from both retrieval paths\n- Cross-encoder reranker using ms-marco-MiniLM-L-6-v2 for final result scoring\n- Three chunking strategies: fixed-size, structure-aware, and semantic\n- Near-duplicate detection with configurable cosine similarity threshold\n- Confidence scoring: retrieval confidence, citation coverage, completeness, composite\n- Streamlit dashboard with hybrid vs dense-only comparison toggle\n- Docker Compose setup for one-command deployment\n\nBug fixes:\n- Fixed BM25 index not persisting correctly when storage directory is missing\n- Fixed ChromaDB collection name collision when running multiple environments\n- Fixed citation parser not handling consecutive [n] markers correctly\n\nVersion 0",
+      "source": "data\\raw\\changelog.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 870
+    },
+    {
+      "text": "2. 0 \u2014 2026-07-01\n\nNew features:\n- FastAPI backend with /v1/ask, /v1/documents, /v1/ingest, and /health endpoints\n- BM25 sparse index with custom implementation (no external dependency)\n- Basic citation extraction and rule-based verification\n- PDF support via pypdf\n\nBug fixes:\n- Fixed HTML loader stripping content inside code blocks\n- Fixed PDF page number extraction for numbered filenames\n\nVersion 0. 1. 0 \u2014 2026-06-01\n\nInitial release:\n- Basic ingestion pipeline with Markdown and text support\n- Fixed-size chunking\n- Simple keyword search (no vector store)\n- Command-line interface for ingestion",
+      "source": "data\\raw\\changelog.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 601
+    },
+    {
+      "text": "# Configuration Reference\n\n## Environment Variables\n\nAll configuration is managed through environment variables. Copy `.env.example` to `.env` to start.\n\n### Authentication\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `BIOME_API_KEY` | \u2014 | Required. API authentication token |\n| `BIOME_DEPLOY_TARGET` | `dev` | Deployment environment: `dev`, `staging`, `production` |\n\n### Embedding\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `EMBEDDING_PROVIDER` | `sentence-transformers` | `sentence-transformers` or `openai` |\n| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Model name for sentence-transformers |\n| `OPENAI_API_KEY` | \u2014 | Required if `EMBEDDING_PROVIDER=openai` |\n| `EMBEDDING_COLLECTION_NAME` | `biome-chunks` | ChromaDB collection nam",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "| \u2014 | Required if `EMBEDDING_PROVIDER=openai` |\n| `EMBEDDING_COLLECTION_NAME` | `biome-chunks` | ChromaDB collection name |\n\n### Chunking\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `CHUNK_SIZE` | `800` | Maximum characters per chunk |\n| `CHUNK_OVERLAP` | `120` | Overlap between consecutive chunks |\n| `DEDUP_THRESHOLD` | `0.95` | Cosine similarity threshold for near-duplicate detection |\n\n### Retrieval\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `DENSE_TOP_K` | `5` | Number of candidates from dense retrieval |\n| `RRF_DENSE_WEIGHT` | `0.7` | Weight given to dense ranks in RRF fusion |\n| `RRF_SPARSE_WEIGHT` | `0.3` | Weight given to sparse (BM25) ranks in RRF fusion |\n| `MAX_CONTEXT_CHUNKS` | `5` | Maximum chunks passed to LLM",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": " `0.3` | Weight given to sparse (BM25) ranks in RRF fusion |\n| `MAX_CONTEXT_CHUNKS` | `5` | Maximum chunks passed to LLM as context |\n| `MAX_CONTEXT_TOKENS` | `1500` | Maximum total tokens in context window |\n| `FALLBACK_KEYWORD_THRESHOLD` | `0.5` | Minimum keyword overlap ratio for smart fallback |\n\n### Language Model\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `LLM_PROVIDER` | `local` | `local`, `ollama`, `openai`, or `anthropic` |\n| `OLLAMA_MODEL` | `llama3.2:3b` | Ollama model name |\n| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |\n| `OLLAMA_TIMEOUT` | `60` | Timeout in seconds for Ollama requests |\n| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model name |\n| `ANTHROPIC_MODEL` | `claude-sonnet-4-5` | Anthropic model name |\n| `ANTHROPIC_A",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": " | `gpt-4o-mini` | OpenAI model name |\n| `ANTHROPIC_MODEL` | `claude-sonnet-4-5` | Anthropic model name |\n| `ANTHROPIC_API_KEY` | \u2014 | Required if `LLM_PROVIDER=anthropic` |\n\n### Citation & Confidence\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `CITATION_VERIFICATION_ENABLED` | `true` | Enable LLM-as-judge citation verification |\n| `INSUFFICIENT_CONFIDENCE_THRESHOLD` | `0.5` | Below this composite score, return \"I don't know\" |\n| `RETRY_ATTEMPTS` | `2` | Number of retries for LLM calls |\n\n## Chunking Strategy Selection\n\nThe pipeline runs all three chunking strategies (fixed, structure-aware, semantic) by default. To restrict to a single strategy during evaluation, set `CHUNKING_STRATEGY` to `fixed`, `structure`, or `semantic`. Default is `all` (runs all thre",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ategy during evaluation, set `CHUNKING_STRATEGY` to `fixed`, `structure`, or `semantic`. Default is `all` (runs all three and deduplicates).\n\n## Logging\n\nSet `LOG_LEVEL` to `DEBUG`, `INFO`, `WARNING`, or `ERROR`. Default is `INFO`. In Docker, logs are streamed to stdout.\n\n## Storage Layout\n\n```\ndata/\n\u251c\u2500\u2500 raw/            # Original uploaded documents\n\u251c\u2500\u2500 processed/\n\u2502   \u2514\u2500\u2500 chunks.json # All processed chunks with metadata\n\u2514\u2500\u2500 index/\n    \u251c\u2500\u2500 bm25_index.pkl    # BM25 sparse index (pickle)\n    \u2514\u2500\u2500 chroma/           # ChromaDB vector store (directory)\n```\n",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "fixed",
+      "character_count": 556
+    },
+    {
+      "text": "# Configuration Reference",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "structure",
+      "character_count": 25
+    },
+    {
+      "text": "## Environment Variables\n\nAll configuration is managed through environment variables. Copy `.env.example` to `.env` to start.",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "structure",
+      "character_count": 125
+    },
+    {
+      "text": "### Authentication\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `BIOME_API_KEY` | \u2014 | Required. API authentication token |\n| `BIOME_DEPLOY_TARGET` | `dev` | Deployment environment: `dev`, `staging`, `production` |",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "structure",
+      "character_count": 245
+    },
+    {
+      "text": "### Embedding\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `EMBEDDING_PROVIDER` | `sentence-transformers` | `sentence-transformers` or `openai` |\n| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Model name for sentence-transformers |\n| `OPENAI_API_KEY` | \u2014 | Required if `EMBEDDING_PROVIDER=openai` |\n| `EMBEDDING_COLLECTION_NAME` | `biome-chunks` | ChromaDB collection name |",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "structure",
+      "character_count": 402
+    },
+    {
+      "text": "### Chunking\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `CHUNK_SIZE` | `800` | Maximum characters per chunk |\n| `CHUNK_OVERLAP` | `120` | Overlap between consecutive chunks |\n| `DEDUP_THRESHOLD` | `0.95` | Cosine similarity threshold for near-duplicate detection |",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "structure",
+      "character_count": 298
+    },
+    {
+      "text": "### Retrieval\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `DENSE_TOP_K` | `5` | Number of candidates from dense retrieval |\n| `RRF_DENSE_WEIGHT` | `0.7` | Weight given to dense ranks in RRF fusion |\n| `RRF_SPARSE_WEIGHT` | `0.3` | Weight given to sparse (BM25) ranks in RRF fusion |\n| `MAX_CONTEXT_CHUNKS` | `5` | Maximum chunks passed to LLM as context |\n| `MAX_CONTEXT_TOKENS` | `1500` | Maximum total tokens in context window |\n| `FALLBACK_KEYWORD_THRESHOLD` | `0.5` | Minimum keyword overlap ratio for smart fallback |",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "structure",
+      "character_count": 555
+    },
+    {
+      "text": "### Language Model\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `LLM_PROVIDER` | `local` | `local`, `ollama`, `openai`, or `anthropic` |\n| `OLLAMA_MODEL` | `llama3.2:3b` | Ollama model name |\n| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |\n| `OLLAMA_TIMEOUT` | `60` | Timeout in seconds for Ollama requests |\n| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model name |\n| `ANTHROPIC_MODEL` | `claude-sonnet-4-5` | Anthropic model name |\n| `ANTHROPIC_API_KEY` | \u2014 | Required if `LLM_PROVIDER=anthropic` |",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "structure",
+      "character_count": 550
+    },
+    {
+      "text": "### Citation & Confidence\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `CITATION_VERIFICATION_ENABLED` | `true` | Enable LLM-as-judge citation verification |\n| `INSUFFICIENT_CONFIDENCE_THRESHOLD` | `0.5` | Below this composite score, return \"I don't know\" |\n| `RETRY_ATTEMPTS` | `2` | Number of retries for LLM calls |",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 7,
+      "chunking_strategy": "structure",
+      "character_count": 350
+    },
+    {
+      "text": "## Chunking Strategy Selection\n\nThe pipeline runs all three chunking strategies (fixed, structure-aware, semantic) by default. To restrict to a single strategy during evaluation, set `CHUNKING_STRATEGY` to `fixed`, `structure`, or `semantic`. Default is `all` (runs all three and deduplicates).",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 8,
+      "chunking_strategy": "structure",
+      "character_count": 294
+    },
+    {
+      "text": "## Logging\n\nSet `LOG_LEVEL` to `DEBUG`, `INFO`, `WARNING`, or `ERROR`. Default is `INFO`. In Docker, logs are streamed to stdout.",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 9,
+      "chunking_strategy": "structure",
+      "character_count": 129
+    },
+    {
+      "text": "## Storage Layout\n\n```\ndata/\n\u251c\u2500\u2500 raw/            # Original uploaded documents\n\u251c\u2500\u2500 processed/\n\u2502   \u2514\u2500\u2500 chunks.json # All processed chunks with metadata\n\u2514\u2500\u2500 index/\n    \u251c\u2500\u2500 bm25_index.pkl    # BM25 sparse index (pickle)\n    \u2514\u2500\u2500 chroma/           # ChromaDB vector store (directory)\n```",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 10,
+      "chunking_strategy": "structure",
+      "character_count": 282
+    },
+    {
+      "text": "# Configuration Reference\n\n## Environment Variables\n\nAll configuration is managed through environment variables. Copy `. env. example` to `. env` to start. ### Authentication\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `BIOME_API_KEY` | \u2014 | Required",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "semantic",
+      "character_count": 282
+    },
+    {
+      "text": "API authentication token |\n| `BIOME_DEPLOY_TARGET` | `dev` | Deployment environment: `dev`, `staging`, `production` |\n\n### Embedding\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `EMBEDDING_PROVIDER` | `sentence-transformers` | `sentence-transformers` or `openai` |\n| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Model name for sentence-transformers |\n| `OPENAI_API_KEY` | \u2014 | Required if `EMBEDDING_PROVIDER=openai` |\n| `EMBEDDING_COLLECTION_NAME` | `biome-chunks` | ChromaDB collection name |\n\n### Chunking\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `CHUNK_SIZE` | `800` | Maximum characters per chunk |\n| `CHUNK_OVERLAP` | `120` | Overlap between consecutive chunks |\n| `DEDUP_THRESHOLD` | `0",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 756
+    },
+    {
+      "text": "95` | Cosine similarity threshold for near-duplicate detection |\n\n### Retrieval\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `DENSE_TOP_K` | `5` | Number of candidates from dense retrieval |\n| `RRF_DENSE_WEIGHT` | `0. 7` | Weight given to dense ranks in RRF fusion |\n| `RRF_SPARSE_WEIGHT` | `0. 3` | Weight given to sparse (BM25) ranks in RRF fusion |\n| `MAX_CONTEXT_CHUNKS` | `5` | Maximum chunks passed to LLM as context |\n| `MAX_CONTEXT_TOKENS` | `1500` | Maximum total tokens in context window |\n| `FALLBACK_KEYWORD_THRESHOLD` | `0",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 567
+    },
+    {
+      "text": "5` | Minimum keyword overlap ratio for smart fallback |\n\n### Language Model\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `LLM_PROVIDER` | `local` | `local`, `ollama`, `openai`, or `anthropic` |\n| `OLLAMA_MODEL` | `llama3",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 252
+    },
+    {
+      "text": "2:3b` | Ollama model name |\n| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |\n| `OLLAMA_TIMEOUT` | `60` | Timeout in seconds for Ollama requests |\n| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model name |\n| `ANTHROPIC_MODEL` | `claude-sonnet-4-5` | Anthropic model name |\n| `ANTHROPIC_API_KEY` | \u2014 | Required if `LLM_PROVIDER=anthropic` |\n\n### Citation & Confidence\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `CITATION_VERIFICATION_ENABLED` | `true` | Enable LLM-as-judge citation verification |\n| `INSUFFICIENT_CONFIDENCE_THRESHOLD` | `0",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "semantic",
+      "character_count": 588
+    },
+    {
+      "text": "5` | Below this composite score, return \"I don't know\" |\n| `RETRY_ATTEMPTS` | `2` | Number of retries for LLM calls |\n\n## Chunking Strategy Selection\n\nThe pipeline runs all three chunking strategies (fixed, structure-aware, semantic) by default. To restrict to a single strategy during evaluation, set `CHUNKING_STRATEGY` to `fixed`, `structure`, or `semantic`. Default is `all` (runs all three and deduplicates). ## Logging\n\nSet `LOG_LEVEL` to `DEBUG`, `INFO`, `WARNING`, or `ERROR`. Default is `INFO`. In Docker, logs are streamed to stdout. ## Storage Layout\n\n```\ndata/\n\u251c\u2500\u2500 raw/            # Original uploaded documents\n\u251c\u2500\u2500 processed/\n\u2502   \u2514\u2500\u2500 chunks. json # All processed chunks with metadata\n\u2514\u2500\u2500 index/\n    \u251c\u2500\u2500 bm25_index",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "semantic",
+      "character_count": 725
+    },
+    {
+      "text": "pkl    # BM25 sparse index (pickle)\n    \u2514\u2500\u2500 chroma/           # ChromaDB vector store (directory)\n```",
+      "source": "data\\raw\\configuration.md",
+      "section_heading": "Configuration Reference",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "semantic",
+      "character_count": 101
+    },
+    {
+      "text": "# Deployment Guide\n\n## Deployment Environments\n\nBiome supports three deployment environments: `dev`, `staging`, and `production`. Set the target with the `BIOME_DEPLOY_TARGET` environment variable.\n\n```bash\nexport BIOME_DEPLOY_TARGET=staging\n```\n\nForgetting to set `BIOME_DEPLOY_TARGET` before a deployment will return error `E2002 Missing Deployment Target`.\n\n## Docker Deployment\n\n### Single command startup\n\n```bash\ndocker compose up --build\n```\n\nThis builds the Docker image, runs the seed script to index the sample corpus, and starts both the API (port 8000) and the Streamlit dashboard (port 8501).\n\n### Services\n\n| Service | Port | Description |\n|---------|------|-------------|\n| `api` | 8000 | FastAPI backend |\n| `dashboard` | 8501 | Streamlit frontend |\n\n### Environment Variables in Dock",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "-----|\n| `api` | 8000 | FastAPI backend |\n| `dashboard` | 8501 | Streamlit frontend |\n\n### Environment Variables in Docker\n\nMount your `.env` file or set environment variables directly in `docker-compose.yml`. Never commit secrets to the repository.\n\n## Kubernetes Deployment\n\nFor production Kubernetes deployment:\n\n1. Build and push the image to your container registry.\n2. Create a Kubernetes Secret for `BIOME_API_KEY` and other secrets.\n3. Apply the deployment manifest:\n\n```bash\nkubectl apply -f k8s/deployment.yaml\n```\n\n### Resource Recommendations\n\n| Component | CPU Request | Memory Request | Notes |\n|-----------|------------|---------------|-------|\n| API | 500m | 512Mi | Scale horizontally for load |\n| Dashboard | 250m | 256Mi | Single replica is fine |\n\n## Rolling Updates\n\nTo update th",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": " | Scale horizontally for load |\n| Dashboard | 250m | 256Mi | Single replica is fine |\n\n## Rolling Updates\n\nTo update the API without downtime, configure a rolling update strategy with `maxUnavailable: 0`. The API is stateless; all state is stored in the ChromaDB volume and BM25 index files.\n\n## Health Checks\n\nThe API exposes `GET /health` for readiness and liveness probes.\n\n```yaml\nlivenessProbe:\n  httpGet:\n    path: /health\n    port: 8000\n  initialDelaySeconds: 30\n  periodSeconds: 10\n```\n\n## Data Persistence\n\nChromaDB data is stored in `data/index/chroma/`. Mount this directory as a persistent volume in Docker or Kubernetes to preserve the index across restarts.\n\nBM25 index is stored in `data/index/bm25_index.pkl`. Both files must be present for the API to serve queries.\n\n## Scaling Inge",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ndex is stored in `data/index/bm25_index.pkl`. Both files must be present for the API to serve queries.\n\n## Scaling Ingestion\n\nFor large corpora (>10,000 documents), run ingestion as a separate job:\n\n```bash\npython -m biome_rag.ingestion.cli --raw-dir /data/raw --processed-dir /data/processed --storage-dir /data/index\n```\n\nIngestion is CPU-bound. Allocate at least 4 CPU cores for large corpora.\n\n## CI/CD Integration\n\nAdd the following step to your CI pipeline to validate the index:\n\n```bash\npython scripts/seed_index.py --validate-only\n```\n\nThis verifies the index is coherent without re-running ingestion.\n",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 612
+    },
+    {
+      "text": "# Deployment Guide",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "structure",
+      "character_count": 18
+    },
+    {
+      "text": "## Deployment Environments\n\nBiome supports three deployment environments: `dev`, `staging`, and `production`. Set the target with the `BIOME_DEPLOY_TARGET` environment variable.\n\n```bash\nexport BIOME_DEPLOY_TARGET=staging\n```\n\nForgetting to set `BIOME_DEPLOY_TARGET` before a deployment will return error `E2002 Missing Deployment Target`.",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "structure",
+      "character_count": 339
+    },
+    {
+      "text": "## Docker Deployment",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "structure",
+      "character_count": 20
+    },
+    {
+      "text": "### Single command startup\n\n```bash\ndocker compose up --build\n```\n\nThis builds the Docker image, runs the seed script to index the sample corpus, and starts both the API (port 8000) and the Streamlit dashboard (port 8501).",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "structure",
+      "character_count": 222
+    },
+    {
+      "text": "### Services\n\n| Service | Port | Description |\n|---------|------|-------------|\n| `api` | 8000 | FastAPI backend |\n| `dashboard` | 8501 | Streamlit frontend |",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "structure",
+      "character_count": 158
+    },
+    {
+      "text": "### Environment Variables in Docker\n\nMount your `.env` file or set environment variables directly in `docker-compose.yml`. Never commit secrets to the repository.",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "structure",
+      "character_count": 162
+    },
+    {
+      "text": "## Kubernetes Deployment\n\nFor production Kubernetes deployment:\n\n1. Build and push the image to your container registry.\n2. Create a Kubernetes Secret for `BIOME_API_KEY` and other secrets.\n3. Apply the deployment manifest:\n\n```bash\nkubectl apply -f k8s/deployment.yaml\n```",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "structure",
+      "character_count": 273
+    },
+    {
+      "text": "### Resource Recommendations\n\n| Component | CPU Request | Memory Request | Notes |\n|-----------|------------|---------------|-------|\n| API | 500m | 512Mi | Scale horizontally for load |\n| Dashboard | 250m | 256Mi | Single replica is fine |",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 7,
+      "chunking_strategy": "structure",
+      "character_count": 240
+    },
+    {
+      "text": "## Rolling Updates\n\nTo update the API without downtime, configure a rolling update strategy with `maxUnavailable: 0`. The API is stateless; all state is stored in the ChromaDB volume and BM25 index files.",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 8,
+      "chunking_strategy": "structure",
+      "character_count": 204
+    },
+    {
+      "text": "## Health Checks\n\nThe API exposes `GET /health` for readiness and liveness probes.\n\n```yaml\nlivenessProbe:\n  httpGet:\n    path: /health\n    port: 8000\n  initialDelaySeconds: 30\n  periodSeconds: 10\n```",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 9,
+      "chunking_strategy": "structure",
+      "character_count": 200
+    },
+    {
+      "text": "## Data Persistence\n\nChromaDB data is stored in `data/index/chroma/`. Mount this directory as a persistent volume in Docker or Kubernetes to preserve the index across restarts.\n\nBM25 index is stored in `data/index/bm25_index.pkl`. Both files must be present for the API to serve queries.",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 10,
+      "chunking_strategy": "structure",
+      "character_count": 287
+    },
+    {
+      "text": "## Scaling Ingestion\n\nFor large corpora (>10,000 documents), run ingestion as a separate job:\n\n```bash\npython -m biome_rag.ingestion.cli --raw-dir /data/raw --processed-dir /data/processed --storage-dir /data/index\n```\n\nIngestion is CPU-bound. Allocate at least 4 CPU cores for large corpora.",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 11,
+      "chunking_strategy": "structure",
+      "character_count": 292
+    },
+    {
+      "text": "## CI/CD Integration\n\nAdd the following step to your CI pipeline to validate the index:\n\n```bash\npython scripts/seed_index.py --validate-only\n```\n\nThis verifies the index is coherent without re-running ingestion.",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 12,
+      "chunking_strategy": "structure",
+      "character_count": 212
+    },
+    {
+      "text": "# Deployment Guide\n\n## Deployment Environments\n\nBiome supports three deployment environments: `dev`, `staging`, and `production`. Set the target with the `BIOME_DEPLOY_TARGET` environment variable. ```bash\nexport BIOME_DEPLOY_TARGET=staging\n```\n\nForgetting to set `BIOME_DEPLOY_TARGET` before a deployment will return error `E2002 Missing Deployment Target`. ## Docker Deployment\n\n### Single command startup\n\n```bash\ndocker compose up --build\n```\n\nThis builds the Docker image, runs the seed script to index the sample corpus, and starts both the API (port 8000) and the Streamlit dashboard (port 8501)",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "semantic",
+      "character_count": 602
+    },
+    {
+      "text": "### Services\n\n| Service | Port | Description |\n|---------|------|-------------|\n| `api` | 8000 | FastAPI backend |\n| `dashboard` | 8501 | Streamlit frontend |\n\n### Environment Variables in Docker\n\nMount your `. env` file or set environment variables directly in `docker-compose. yml`. Never commit secrets to the repository. ## Kubernetes Deployment\n\nFor production Kubernetes deployment:\n\n1. Build and push the image to your container registry. 2. Create a Kubernetes Secret for `BIOME_API_KEY` and other secrets. 3. Apply the deployment manifest:\n\n```bash\nkubectl apply -f k8s/deployment",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 589
+    },
+    {
+      "text": "yaml\n```\n\n### Resource Recommendations\n\n| Component | CPU Request | Memory Request | Notes |\n|-----------|------------|---------------|-------|\n| API | 500m | 512Mi | Scale horizontally for load |\n| Dashboard | 250m | 256Mi | Single replica is fine |\n\n## Rolling Updates\n\nTo update the API without downtime, configure a rolling update strategy with `maxUnavailable: 0`. The API is stateless; all state is stored in the ChromaDB volume and BM25 index files. ## Health Checks\n\nThe API exposes `GET /health` for readiness and liveness probes. ```yaml\nlivenessProbe:\n  httpGet:\n    path: /health\n    port: 8000\n  initialDelaySeconds: 30\n  periodSeconds: 10\n```\n\n## Data Persistence\n\nChromaDB data is stored in `data/index/chroma/`",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 726
+    },
+    {
+      "text": "Mount this directory as a persistent volume in Docker or Kubernetes to preserve the index across restarts. BM25 index is stored in `data/index/bm25_index. pkl`. Both files must be present for the API to serve queries. ## Scaling Ingestion\n\nFor large corpora (>10,000 documents), run ingestion as a separate job:\n\n```bash\npython -m biome_rag. ingestion. cli --raw-dir /data/raw --processed-dir /data/processed --storage-dir /data/index\n```\n\nIngestion is CPU-bound. Allocate at least 4 CPU cores for large corpora. ## CI/CD Integration\n\nAdd the following step to your CI pipeline to validate the index:\n\n```bash\npython scripts/seed_index. py --validate-only\n```\n\nThis verifies the index is coherent without re-running ingestion",
+      "source": "data\\raw\\deployment-guide.md",
+      "section_heading": "Deployment Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 725
+    },
+    {
+      "text": "Biome Error Codes Reference Error Codes Reference Authentication Errors (E1xxx) E1001 \u2014 Invalid Credentials Returned when the BIOME_API_KEY is missing, malformed, or revoked. HTTP status: 401. Resolution: Set the BIOME_API_KEY environment variable and verify the token has not expired. Contact your administrator if the issue persists. E1002 \u2014 Rate Limit Exceeded The client has sent more than 100 requests per minute. HTTP status: 429. Resolution: Implement exponential backoff. The Retry-After header specifies the number of seconds to wait before retrying. E1003 \u2014 Token Expired The BIOME_API_KEY has passed its expiry date (90 days). HTTP status: 401. Resolution: Request a new token from your administrator. Resource Errors (E2xxx) E2001 \u2014 Resource Not Found The requested document, chunk, or co",
+      "source": "data\\raw\\error-codes.html",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "w token from your administrator. Resource Errors (E2xxx) E2001 \u2014 Resource Not Found The requested document, chunk, or collection does not exist. HTTP status: 404. Resolution: Verify the resource ID. Ensure the corpus has been indexed by running seed_index.py. E2002 \u2014 Missing Deployment Target A deployment was initiated without a BIOME_DEPLOY_TARGET environment variable. HTTP status: 400. Resolution: Set BIOME_DEPLOY_TARGET to dev, staging, or production before deploying. E2003 \u2014 Collection Already Exists Attempted to create a ChromaDB collection that already exists with a different schema. HTTP status: 409. Resolution: Delete data/index/chroma/ and re-run ingestion, or change EMBEDDING_COLLECTION_NAME in .env. Ingestion Errors (E3xxx) E3001 \u2014 Chunking Failed Ingestion succeeded but chunkin",
+      "source": "data\\raw\\error-codes.html",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ange EMBEDDING_COLLECTION_NAME in .env. Ingestion Errors (E3xxx) E3001 \u2014 Chunking Failed Ingestion succeeded but chunking produced zero chunks from a document. HTTP status: 422. Resolution: Ensure the document is not empty and uses a supported format (Markdown, TXT, HTML, PDF). E3002 \u2014 Index Out of Sync The BM25 index and ChromaDB vector store contain a different number of chunks. HTTP status: 500. Resolution: Delete data/index/ and re-run seed_index.py to rebuild both indexes. E3003 \u2014 Duplicate Document The submitted document is a near-duplicate (cosine similarity above DEDUP_THRESHOLD) of an already-indexed chunk. The document is skipped. HTTP status: 200 (not an error, logged as a warning). Resolution: No action required. If you intentionally want to re-index modified content, delete th",
+      "source": "data\\raw\\error-codes.html",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": " logged as a warning). Resolution: No action required. If you intentionally want to re-index modified content, delete the existing index and re-run ingestion. Generation Errors (E4xxx) E4001 \u2014 LLM Timeout The language model did not respond within OLLAMA_TIMEOUT seconds. HTTP status: 504. Resolution: Increase OLLAMA_TIMEOUT in .env or switch to a faster model. E4002 \u2014 Insufficient Context Retrieval confidence is below INSUFFICIENT_CONFIDENCE_THRESHOLD. A structured \"I don't know\" response is returned rather than a hallucinated answer. HTTP status: 200. Resolution: Rephrase the question or ensure the relevant documents are indexed.",
+      "source": "data\\raw\\error-codes.html",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 637
+    },
+    {
+      "text": "Resource Errors (E2xxx) E2001 \u2014 Resource Not Found The requested document, chunk, or collection does not exist. HTTP status: 404. Resolution: Verify the resource ID. Ensure the corpus has been indexed by running seed_index. py. E2002 \u2014 Missing Deployment Target A deployment was initiated without a BIOME_DEPLOY_TARGET environment variable. HTTP status: 400. Resolution: Set BIOME_DEPLOY_TARGET to dev, staging, or production before deploying. E2003 \u2014 Collection Already Exists Attempted to create a ChromaDB collection that already exists with a different schema. HTTP status: 409. Resolution: Delete data/index/chroma/ and re-run ingestion, or change EMBEDDING_COLLECTION_NAME in. env. Ingestion Errors (E3xxx) E3001 \u2014 Chunking Failed Ingestion succeeded but chunking produced zero chunks from a document. HTTP status: 422",
+      "source": "data\\raw\\error-codes.html",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 824
+    },
+    {
+      "text": "Resolution: Ensure the document is not empty and uses a supported format (Markdown, TXT, HTML, PDF). E3002 \u2014 Index Out of Sync The BM25 index and ChromaDB vector store contain a different number of chunks. HTTP status: 500. Resolution: Delete data/index/ and re-run seed_index. py to rebuild both indexes. E3003 \u2014 Duplicate Document The submitted document is a near-duplicate (cosine similarity above DEDUP_THRESHOLD) of an already-indexed chunk. The document is skipped. HTTP status: 200 (not an error, logged as a warning). Resolution: No action required. If you intentionally want to re-index modified content, delete the existing index and re-run ingestion. Generation Errors (E4xxx) E4001 \u2014 LLM Timeout The language model did not respond within OLLAMA_TIMEOUT seconds. HTTP status: 504",
+      "source": "data\\raw\\error-codes.html",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 790
+    },
+    {
+      "text": "Resolution: Increase OLLAMA_TIMEOUT in. env or switch to a faster model. E4002 \u2014 Insufficient Context Retrieval confidence is below INSUFFICIENT_CONFIDENCE_THRESHOLD. A structured \"I don't know\" response is returned rather than a hallucinated answer. HTTP status: 200. Resolution: Rephrase the question or ensure the relevant documents are indexed",
+      "source": "data\\raw\\error-codes.html",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 347
+    },
+    {
+      "text": "Biome RAG \u2014 Evaluation Methodology\n\nThis document describes the methodology used to evaluate the Biome RAG system.\n\nEvaluation Dataset\n\nThe evaluation set contains 50 questions drawn from the seeded corpus of 10 internal documents. Questions cover four categories: simple lookups (20 questions), multi-hop questions requiring information from two or more documents (15 questions), unanswerable questions with no supporting content in the corpus (10 questions), and ambiguous questions where multiple answers are plausible (5 questions).\n\nGolden answers were written manually by referencing the source documents. Each question also records expected_chunk_ids listing the document sections that should be retrieved.\n\nMetrics\n\nAnswer Correctness: Computed as the F1 overlap between predicted and golden ",
+      "source": "data\\raw\\evaluation-methodology.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ections that should be retrieved.\n\nMetrics\n\nAnswer Correctness: Computed as the F1 overlap between predicted and golden answer token sets. A score of 1.0 means the predicted answer contains all golden tokens. A score of 0.0 means no overlap. This is a recall-biased metric; longer answers score higher. LLM-as-judge is used as an optional higher-quality alternative when an API key is available.\n\nFaithfulness: Measures whether the predicted answer tokens are grounded in the retrieved context. Computed as the fraction of predicted answer tokens that appear in the retrieved chunk text. A score of 1.0 means every word in the answer appeared in the context.\n\nRetrieval Relevance: Precision at the retrieved set. Computed as the fraction of expected_chunk_ids that appear in the retrieved chunk ident",
+      "source": "data\\raw\\evaluation-methodology.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": " Precision at the retrieved set. Computed as the fraction of expected_chunk_ids that appear in the retrieved chunk identifiers. A score of 1.0 means all expected chunks were retrieved.\n\nCitation Accuracy: The fraction of citations that are verified as supporting the claim they are attached to. Verification uses a rule-based judge (keyword overlap with negation detection) by default, or an LLM judge when an API key is available.\n\nChunking Strategy Comparison\n\nThe full evaluation suite is run three times, once restricting ingestion to each chunking strategy (fixed, structure-aware, semantic). This produces per-strategy metric tables showing which strategy produces the best retrieval relevance, faithfulness, and citation accuracy on this corpus.\n\nHybrid vs Dense-Only Comparison\n\nThe retrieval",
+      "source": "data\\raw\\evaluation-methodology.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "retrieval relevance, faithfulness, and citation accuracy on this corpus.\n\nHybrid vs Dense-Only Comparison\n\nThe retrieval_relevance metric is computed separately for hybrid mode and dense-only mode to demonstrate the advantage of BM25 augmentation, particularly on exact-term queries such as error codes and configuration key names.\n\nReproducibility\n\nAll evaluation results are written to eval/reports/ as JSON and Markdown. The golden dataset is static; results are reproducible given the same model and index.\n",
+      "source": "data\\raw\\evaluation-methodology.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 511
+    },
+    {
+      "text": "0 means all expected chunks were retrieved. Citation Accuracy: The fraction of citations that are verified as supporting the claim they are attached to. Verification uses a rule-based judge (keyword overlap with negation detection) by default, or an LLM judge when an API key is available. Chunking Strategy Comparison\n\nThe full evaluation suite is run three times, once restricting ingestion to each chunking strategy (fixed, structure-aware, semantic). This produces per-strategy metric tables showing which strategy produces the best retrieval relevance, faithfulness, and citation accuracy on this corpus",
+      "source": "data\\raw\\evaluation-methodology.txt",
+      "section_heading": null,
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 608
+    },
+    {
+      "text": "# Frequently Asked Questions\n\n## General\n\n### What is Biome RAG?\n\nBiome RAG is a retrieval-augmented generation system for internal documentation. It indexes your documents using both dense vector search and sparse keyword (BM25) search, fuses the results using Reciprocal Rank Fusion, reranks with a cross-encoder, and generates grounded answers with cited sources.\n\n### What file formats does Biome support?\n\nBiome supports Markdown (`.md`), plain text (`.txt`), HTML (`.html`, `.htm`), and PDF (`.pdf`). Other formats are silently skipped during ingestion.\n\n### How long does ingestion take?\n\nFor a 10-document corpus, ingestion takes approximately 30\u201360 seconds including embedding and cross-encoder model loading. For 100 documents, expect 5\u201310 minutes. Ingestion scales roughly linearly with do",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "dding and cross-encoder model loading. For 100 documents, expect 5\u201310 minutes. Ingestion scales roughly linearly with document count.\n\n### Can I add documents without re-running full ingestion?\n\nYes. Use `POST /v1/ingest` to add new documents. The pipeline incrementally adds new chunks to both indexes. Near-duplicate detection prevents re-inserting content that already exists.\n\n## Retrieval\n\n### What is hybrid retrieval and why is it better than dense-only?\n\nHybrid retrieval combines dense (semantic embedding) search and sparse (BM25 keyword) search. Dense retrieval finds semantically similar content even when exact terms differ. Sparse retrieval finds documents containing exact query terms. Combining both via Reciprocal Rank Fusion ensures neither signal is ignored. For queries containing",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "g exact query terms. Combining both via Reciprocal Rank Fusion ensures neither signal is ignored. For queries containing exact configuration keys (like `BIOME_API_KEY`) or error codes (like `E1001`), sparse retrieval consistently outperforms dense-only search because embeddings tend to smooth over exact token matches.\n\n### What is Reciprocal Rank Fusion?\n\nRRF combines ranked lists from multiple sources without requiring score normalisation. Each document is scored as the weighted sum of `1/rank` across all lists. The default weights are `0.7` for dense and `0.3` for sparse. These are configurable via `RRF_DENSE_WEIGHT` and `RRF_SPARSE_WEIGHT`.\n\n### What does the reranker do?\n\nAfter RRF fusion, the top-20 candidates are passed to a cross-encoder reranker (`cross-encoder/ms-marco-MiniLM-L-6-",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "do?\n\nAfter RRF fusion, the top-20 candidates are passed to a cross-encoder reranker (`cross-encoder/ms-marco-MiniLM-L-6-v2`). The cross-encoder scores each (query, document) pair jointly, which is more accurate than embedding-based similarity but too slow to run over the full index. It returns the top-5 results.\n\n### Why does the retrieval sometimes return \"I don't know\"?\n\nIf the composite confidence score (combining retrieval relevance, citation coverage, and answer completeness) falls below the `INSUFFICIENT_CONFIDENCE_THRESHOLD` (default `0.5`), the system returns a structured \"insufficient context\" response rather than generating a potentially hallucinated answer. You can lower this threshold in `.env` if you prefer the system to attempt answers with lower confidence.\n\n## Generation\n\n#",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": " can lower this threshold in `.env` if you prefer the system to attempt answers with lower confidence.\n\n## Generation\n\n### How does citation work?\n\nThe system numbers the retrieved context blocks as `[1]`, `[2]`, etc. in the prompt. The language model is instructed to cite sources using these numbers inline. After generation, the system parses the `[n]` markers, pairs each citation with the corresponding chunk, and runs a verification pass to confirm the chunk supports the claim.\n\n### What happens if a citation is unverified?\n\nUnverified citations appear in the response with `verified: false`. The dashboard highlights these in amber to signal they require manual review. The presence of unverified citations does not suppress the answer.\n\n### Can I use a different language model?\n\nYes. Set `",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "he presence of unverified citations does not suppress the answer.\n\n### Can I use a different language model?\n\nYes. Set `LLM_PROVIDER` to:\n- `ollama` \u2014 local inference via Ollama (default, requires Ollama running)\n- `openai` \u2014 OpenAI GPT-4o or GPT-4o-mini (requires `OPENAI_API_KEY`)\n- `anthropic` \u2014 Anthropic Claude (requires `ANTHROPIC_API_KEY`)\n\n## Troubleshooting\n\n### The API returns 500 errors\n\nCheck that ingestion has been run (`data/processed/chunks.json` exists) and that the storage directory is writable.\n\n### Answers are very short or seem truncated\n\nIncrease `MAX_CONTEXT_TOKENS` (default 1500) or `MAX_CONTEXT_CHUNKS` (default 5) in `.env`.\n\n### The cross-encoder is slow\n\nThe cross-encoder (`ms-marco-MiniLM-L-6-v2`) loads on first use. Subsequent queries are faster. To disable rerank",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": " slow\n\nThe cross-encoder (`ms-marco-MiniLM-L-6-v2`) loads on first use. Subsequent queries are faster. To disable reranking entirely, set the reranker model to an invalid name \u2014 it will fall back to token overlap scoring.\n\n### ChromaDB error on startup\n\nDelete `data/index/chroma/` and re-run ingestion. The Chroma schema can change between package versions.\n",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "fixed",
+      "character_count": 359
+    },
+    {
+      "text": "# Frequently Asked Questions",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "structure",
+      "character_count": 28
+    },
+    {
+      "text": "## General",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "structure",
+      "character_count": 10
+    },
+    {
+      "text": "### What is Biome RAG?\n\nBiome RAG is a retrieval-augmented generation system for internal documentation. It indexes your documents using both dense vector search and sparse keyword (BM25) search, fuses the results using Reciprocal Rank Fusion, reranks with a cross-encoder, and generates grounded answers with cited sources.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "structure",
+      "character_count": 324
+    },
+    {
+      "text": "### What file formats does Biome support?\n\nBiome supports Markdown (`.md`), plain text (`.txt`), HTML (`.html`, `.htm`), and PDF (`.pdf`). Other formats are silently skipped during ingestion.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "structure",
+      "character_count": 191
+    },
+    {
+      "text": "### How long does ingestion take?\n\nFor a 10-document corpus, ingestion takes approximately 30\u201360 seconds including embedding and cross-encoder model loading. For 100 documents, expect 5\u201310 minutes. Ingestion scales roughly linearly with document count.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "structure",
+      "character_count": 252
+    },
+    {
+      "text": "### Can I add documents without re-running full ingestion?\n\nYes. Use `POST /v1/ingest` to add new documents. The pipeline incrementally adds new chunks to both indexes. Near-duplicate detection prevents re-inserting content that already exists.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "structure",
+      "character_count": 244
+    },
+    {
+      "text": "## Retrieval",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "structure",
+      "character_count": 12
+    },
+    {
+      "text": "### What is hybrid retrieval and why is it better than dense-only?\n\nHybrid retrieval combines dense (semantic embedding) search and sparse (BM25 keyword) search. Dense retrieval finds semantically similar content even when exact terms differ. Sparse retrieval finds documents containing exact query terms. Combining both via Reciprocal Rank Fusion ensures neither signal is ignored. For queries containing exact configuration keys (like `BIOME_API_KEY`) or error codes (like `E1001`), sparse retrieval consistently outperforms dense-only search because embeddings tend to smooth over exact token matches.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 7,
+      "chunking_strategy": "structure",
+      "character_count": 604
+    },
+    {
+      "text": "### What is Reciprocal Rank Fusion?\n\nRRF combines ranked lists from multiple sources without requiring score normalisation. Each document is scored as the weighted sum of `1/rank` across all lists. The default weights are `0.7` for dense and `0.3` for sparse. These are configurable via `RRF_DENSE_WEIGHT` and `RRF_SPARSE_WEIGHT`.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 8,
+      "chunking_strategy": "structure",
+      "character_count": 330
+    },
+    {
+      "text": "### What does the reranker do?\n\nAfter RRF fusion, the top-20 candidates are passed to a cross-encoder reranker (`cross-encoder/ms-marco-MiniLM-L-6-v2`). The cross-encoder scores each (query, document) pair jointly, which is more accurate than embedding-based similarity but too slow to run over the full index. It returns the top-5 results.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 9,
+      "chunking_strategy": "structure",
+      "character_count": 340
+    },
+    {
+      "text": "### Why does the retrieval sometimes return \"I don't know\"?\n\nIf the composite confidence score (combining retrieval relevance, citation coverage, and answer completeness) falls below the `INSUFFICIENT_CONFIDENCE_THRESHOLD` (default `0.5`), the system returns a structured \"insufficient context\" response rather than generating a potentially hallucinated answer. You can lower this threshold in `.env` if you prefer the system to attempt answers with lower confidence.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 10,
+      "chunking_strategy": "structure",
+      "character_count": 467
+    },
+    {
+      "text": "## Generation",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 11,
+      "chunking_strategy": "structure",
+      "character_count": 13
+    },
+    {
+      "text": "### How does citation work?\n\nThe system numbers the retrieved context blocks as `[1]`, `[2]`, etc. in the prompt. The language model is instructed to cite sources using these numbers inline. After generation, the system parses the `[n]` markers, pairs each citation with the corresponding chunk, and runs a verification pass to confirm the chunk supports the claim.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 12,
+      "chunking_strategy": "structure",
+      "character_count": 365
+    },
+    {
+      "text": "### What happens if a citation is unverified?\n\nUnverified citations appear in the response with `verified: false`. The dashboard highlights these in amber to signal they require manual review. The presence of unverified citations does not suppress the answer.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 13,
+      "chunking_strategy": "structure",
+      "character_count": 259
+    },
+    {
+      "text": "### Can I use a different language model?\n\nYes. Set `LLM_PROVIDER` to:\n- `ollama` \u2014 local inference via Ollama (default, requires Ollama running)\n- `openai` \u2014 OpenAI GPT-4o or GPT-4o-mini (requires `OPENAI_API_KEY`)\n- `anthropic` \u2014 Anthropic Claude (requires `ANTHROPIC_API_KEY`)",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 14,
+      "chunking_strategy": "structure",
+      "character_count": 279
+    },
+    {
+      "text": "## Troubleshooting",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 15,
+      "chunking_strategy": "structure",
+      "character_count": 18
+    },
+    {
+      "text": "### The API returns 500 errors\n\nCheck that ingestion has been run (`data/processed/chunks.json` exists) and that the storage directory is writable.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 16,
+      "chunking_strategy": "structure",
+      "character_count": 147
+    },
+    {
+      "text": "### Answers are very short or seem truncated\n\nIncrease `MAX_CONTEXT_TOKENS` (default 1500) or `MAX_CONTEXT_CHUNKS` (default 5) in `.env`.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 17,
+      "chunking_strategy": "structure",
+      "character_count": 137
+    },
+    {
+      "text": "### The cross-encoder is slow\n\nThe cross-encoder (`ms-marco-MiniLM-L-6-v2`) loads on first use. Subsequent queries are faster. To disable reranking entirely, set the reranker model to an invalid name \u2014 it will fall back to token overlap scoring.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 18,
+      "chunking_strategy": "structure",
+      "character_count": 245
+    },
+    {
+      "text": "### ChromaDB error on startup\n\nDelete `data/index/chroma/` and re-run ingestion. The Chroma schema can change between package versions.",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 19,
+      "chunking_strategy": "structure",
+      "character_count": 135
+    },
+    {
+      "text": "### Can I add documents without re-running full ingestion?\n\nYes. Use `POST /v1/ingest` to add new documents. The pipeline incrementally adds new chunks to both indexes. Near-duplicate detection prevents re-inserting content that already exists. ## Retrieval\n\n### What is hybrid retrieval and why is it better than dense-only?\n\nHybrid retrieval combines dense (semantic embedding) search and sparse (BM25 keyword) search. Dense retrieval finds semantically similar content even when exact terms differ. Sparse retrieval finds documents containing exact query terms. Combining both via Reciprocal Rank Fusion ensures neither signal is ignored",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 640
+    },
+    {
+      "text": "For queries containing exact configuration keys (like `BIOME_API_KEY`) or error codes (like `E1001`), sparse retrieval consistently outperforms dense-only search because embeddings tend to smooth over exact token matches. ### What is Reciprocal Rank Fusion?\n\nRRF combines ranked lists from multiple sources without requiring score normalisation. Each document is scored as the weighted sum of `1/rank` across all lists. The default weights are `0. 7` for dense and `0. 3` for sparse. These are configurable via `RRF_DENSE_WEIGHT` and `RRF_SPARSE_WEIGHT`. ### What does the reranker do?\n\nAfter RRF fusion, the top-20 candidates are passed to a cross-encoder reranker (`cross-encoder/ms-marco-MiniLM-L-6-v2`)",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 706
+    },
+    {
+      "text": "The cross-encoder scores each (query, document) pair jointly, which is more accurate than embedding-based similarity but too slow to run over the full index. It returns the top-5 results. ### Why does the retrieval sometimes return \"I don't know\"?\n\nIf the composite confidence score (combining retrieval relevance, citation coverage, and answer completeness) falls below the `INSUFFICIENT_CONFIDENCE_THRESHOLD` (default `0. 5`), the system returns a structured \"insufficient context\" response rather than generating a potentially hallucinated answer. You can lower this threshold in `. env` if you prefer the system to attempt answers with lower confidence. ## Generation\n\n### How does citation work?\n\nThe system numbers the retrieved context blocks as `[1]`, `[2]`, etc. in the prompt",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 785
+    },
+    {
+      "text": "The language model is instructed to cite sources using these numbers inline. After generation, the system parses the `[n]` markers, pairs each citation with the corresponding chunk, and runs a verification pass to confirm the chunk supports the claim. ### What happens if a citation is unverified?\n\nUnverified citations appear in the response with `verified: false`. The dashboard highlights these in amber to signal they require manual review. The presence of unverified citations does not suppress the answer. ### Can I use a different language model?\n\nYes",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "semantic",
+      "character_count": 558
+    },
+    {
+      "text": "Set `LLM_PROVIDER` to:\n- `ollama` \u2014 local inference via Ollama (default, requires Ollama running)\n- `openai` \u2014 OpenAI GPT-4o or GPT-4o-mini (requires `OPENAI_API_KEY`)\n- `anthropic` \u2014 Anthropic Claude (requires `ANTHROPIC_API_KEY`)\n\n## Troubleshooting\n\n### The API returns 500 errors\n\nCheck that ingestion has been run (`data/processed/chunks. json` exists) and that the storage directory is writable. ### Answers are very short or seem truncated\n\nIncrease `MAX_CONTEXT_TOKENS` (default 1500) or `MAX_CONTEXT_CHUNKS` (default 5) in `. env`. ### The cross-encoder is slow\n\nThe cross-encoder (`ms-marco-MiniLM-L-6-v2`) loads on first use. Subsequent queries are faster. To disable reranking entirely, set the reranker model to an invalid name \u2014 it will fall back to token overlap scoring",
+      "source": "data\\raw\\faq.md",
+      "section_heading": "Frequently Asked Questions",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "semantic",
+      "character_count": 785
+    },
+    {
+      "text": "# Biome Onboarding Guide\n\n## Welcome to Biome\n\nBiome is an internal knowledge management platform that lets teams search, retrieve, and query their documentation using AI. This guide walks you through getting started in under 30 minutes.\n\n## Prerequisites\n\n- Python 3.11 or higher\n- Docker (optional, for containerised deployment)\n- A Biome API key (request from your team administrator)\n\n## Step 1 \u2014 Install the Biome CLI\n\n```bash\npip install biome-rag\n```\n\n## Step 2 \u2014 Configure Your Environment\n\nCopy the example environment file and fill in your credentials:\n\n```bash\ncp .env.example .env\n```\n\nSet the following required variables in `.env`:\n- `BIOME_API_KEY` \u2014 your authentication token. Without this, all API calls will fail with E1001.\n- `LLM_PROVIDER` \u2014 set to `ollama` for local inference or",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ation token. Without this, all API calls will fail with E1001.\n- `LLM_PROVIDER` \u2014 set to `ollama` for local inference or `openai` for cloud inference.\n- `OLLAMA_MODEL` \u2014 the local model to use (e.g. `llama3.2:3b`).\n\n## Step 3 \u2014 Add Your Documents\n\nPlace documents in the `data/raw/` directory. Supported formats are Markdown (`.md`), plain text (`.txt`), HTML (`.html`, `.htm`), and PDF (`.pdf`).\n\n```\ndata/raw/\n\u251c\u2500\u2500 api-reference.md\n\u251c\u2500\u2500 onboarding.md\n\u2514\u2500\u2500 my-policy.pdf\n```\n\n## Step 4 \u2014 Run Ingestion\n\n```bash\npython scripts/seed_index.py\n```\n\nThis will:\n1. Load all documents from `data/raw/`\n2. Chunk them using three strategies (fixed, structure-aware, semantic)\n3. Build the BM25 sparse index\n4. Build the ChromaDB dense vector index\n5. Print a summary of indexed chunks\n\nExpected output:\n```\nInge",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "25 sparse index\n4. Build the ChromaDB dense vector index\n5. Print a summary of indexed chunks\n\nExpected output:\n```\nIngestion complete.\nDocuments processed: 10\nChunks created: 342\nDuplicates skipped: 18\nBM25 index: data/index/bm25_index.pkl\nChroma collection: biome-chunks (data/index/chroma/)\n```\n\n## Step 5 \u2014 Start the API\n\n```bash\npython app.py\n```\n\nThe API will be reachable at `http://localhost:8000`. Visit `http://localhost:8000/docs` for interactive API documentation.\n\n## Step 6 \u2014 Start the Dashboard\n\nIn a second terminal:\n\n```bash\nstreamlit run streamlit_app.py\n```\n\nThe dashboard will open at `http://localhost:8501`.\n\n## Verifying Authentication\n\nIf authentication fails after setup, verify:\n1. `BIOME_API_KEY` is set in your `.env` file\n2. The token has not expired (tokens expire after",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ils after setup, verify:\n1. `BIOME_API_KEY` is set in your `.env` file\n2. The token has not expired (tokens expire after 90 days)\n3. You are not exceeding the rate limit (E1002)\n\nContact your administrator if E1001 persists after verifying the token is present in the environment.\n\n## Common First-Run Issues\n\n| Problem | Likely Cause | Solution |\n|---------|-------------|----------|\n| `E1001 Invalid Credentials` | Missing API key | Set `BIOME_API_KEY` in `.env` |\n| `E2002 Missing Deployment Target` | `BIOME_DEPLOY_TARGET` not set | Set to `staging`, `production`, or `dev` |\n| Empty answers | Ingestion not run | Run `python scripts/seed_index.py` |\n| Slow first query | Cross-encoder loading | Wait 10\u201315s on first query; subsequent queries are faster |\n",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 760
+    },
+    {
+      "text": "# Biome Onboarding Guide",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "structure",
+      "character_count": 24
+    },
+    {
+      "text": "## Welcome to Biome\n\nBiome is an internal knowledge management platform that lets teams search, retrieve, and query their documentation using AI. This guide walks you through getting started in under 30 minutes.",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "structure",
+      "character_count": 211
+    },
+    {
+      "text": "## Prerequisites\n\n- Python 3.11 or higher\n- Docker (optional, for containerised deployment)\n- A Biome API key (request from your team administrator)",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "structure",
+      "character_count": 148
+    },
+    {
+      "text": "## Step 1 \u2014 Install the Biome CLI\n\n```bash\npip install biome-rag\n```",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "structure",
+      "character_count": 68
+    },
+    {
+      "text": "## Step 2 \u2014 Configure Your Environment\n\nCopy the example environment file and fill in your credentials:\n\n```bash\ncp .env.example .env\n```\n\nSet the following required variables in `.env`:\n- `BIOME_API_KEY` \u2014 your authentication token. Without this, all API calls will fail with E1001.\n- `LLM_PROVIDER` \u2014 set to `ollama` for local inference or `openai` for cloud inference.\n- `OLLAMA_MODEL` \u2014 the local model to use (e.g. `llama3.2:3b`).",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "structure",
+      "character_count": 435
+    },
+    {
+      "text": "## Step 3 \u2014 Add Your Documents\n\nPlace documents in the `data/raw/` directory. Supported formats are Markdown (`.md`), plain text (`.txt`), HTML (`.html`, `.htm`), and PDF (`.pdf`).\n\n```\ndata/raw/\n\u251c\u2500\u2500 api-reference.md\n\u251c\u2500\u2500 onboarding.md\n\u2514\u2500\u2500 my-policy.pdf\n```",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "structure",
+      "character_count": 256
+    },
+    {
+      "text": "## Step 4 \u2014 Run Ingestion\n\n```bash\npython scripts/seed_index.py\n```\n\nThis will:\n1. Load all documents from `data/raw/`\n2. Chunk them using three strategies (fixed, structure-aware, semantic)\n3. Build the BM25 sparse index\n4. Build the ChromaDB dense vector index\n5. Print a summary of indexed chunks\n\nExpected output:\n```\nIngestion complete.\nDocuments processed: 10\nChunks created: 342\nDuplicates skipped: 18\nBM25 index: data/index/bm25_index.pkl\nChroma collection: biome-chunks (data/index/chroma/)\n```",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "structure",
+      "character_count": 503
+    },
+    {
+      "text": "## Step 5 \u2014 Start the API\n\n```bash\npython app.py\n```\n\nThe API will be reachable at `http://localhost:8000`. Visit `http://localhost:8000/docs` for interactive API documentation.",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 7,
+      "chunking_strategy": "structure",
+      "character_count": 177
+    },
+    {
+      "text": "## Step 6 \u2014 Start the Dashboard\n\nIn a second terminal:\n\n```bash\nstreamlit run streamlit_app.py\n```\n\nThe dashboard will open at `http://localhost:8501`.",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 8,
+      "chunking_strategy": "structure",
+      "character_count": 151
+    },
+    {
+      "text": "## Verifying Authentication\n\nIf authentication fails after setup, verify:\n1. `BIOME_API_KEY` is set in your `.env` file\n2. The token has not expired (tokens expire after 90 days)\n3. You are not exceeding the rate limit (E1002)\n\nContact your administrator if E1001 persists after verifying the token is present in the environment.",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 9,
+      "chunking_strategy": "structure",
+      "character_count": 329
+    },
+    {
+      "text": "## Common First-Run Issues\n\n| Problem | Likely Cause | Solution |\n|---------|-------------|----------|\n| `E1001 Invalid Credentials` | Missing API key | Set `BIOME_API_KEY` in `.env` |\n| `E2002 Missing Deployment Target` | `BIOME_DEPLOY_TARGET` not set | Set to `staging`, `production`, or `dev` |\n| Empty answers | Ingestion not run | Run `python scripts/seed_index.py` |\n| Slow first query | Cross-encoder loading | Wait 10\u201315s on first query; subsequent queries are faster |",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 10,
+      "chunking_strategy": "structure",
+      "character_count": 477
+    },
+    {
+      "text": "- `LLM_PROVIDER` \u2014 set to `ollama` for local inference or `openai` for cloud inference. - `OLLAMA_MODEL` \u2014 the local model to use (e. g. `llama3. 2:3b`). ## Step 3 \u2014 Add Your Documents\n\nPlace documents in the `data/raw/` directory. Supported formats are Markdown (`. md`), plain text (`. txt`), HTML (`. html`, `. htm`), and PDF (`. pdf`). ```\ndata/raw/\n\u251c\u2500\u2500 api-reference. md\n\u251c\u2500\u2500 onboarding. md\n\u2514\u2500\u2500 my-policy. pdf\n```\n\n## Step 4 \u2014 Run Ingestion\n\n```bash\npython scripts/seed_index. py\n```\n\nThis will:\n1. Load all documents from `data/raw/`\n2. Chunk them using three strategies (fixed, structure-aware, semantic)\n3. Build the BM25 sparse index\n4. Build the ChromaDB dense vector index\n5. Print a summary of indexed chunks\n\nExpected output:\n```\nIngestion complete",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 760
+    },
+    {
+      "text": "Documents processed: 10\nChunks created: 342\nDuplicates skipped: 18\nBM25 index: data/index/bm25_index. pkl\nChroma collection: biome-chunks (data/index/chroma/)\n```\n\n## Step 5 \u2014 Start the API\n\n```bash\npython app. py\n```\n\nThe API will be reachable at `http://localhost:8000`. Visit `http://localhost:8000/docs` for interactive API documentation. ## Step 6 \u2014 Start the Dashboard\n\nIn a second terminal:\n\n```bash\nstreamlit run streamlit_app. py\n```\n\nThe dashboard will open at `http://localhost:8501`. ## Verifying Authentication\n\nIf authentication fails after setup, verify:\n1. `BIOME_API_KEY` is set in your `. env` file\n2. The token has not expired (tokens expire after 90 days)\n3",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 677
+    },
+    {
+      "text": "You are not exceeding the rate limit (E1002)\n\nContact your administrator if E1001 persists after verifying the token is present in the environment. ## Common First-Run Issues\n\n| Problem | Likely Cause | Solution |\n|---------|-------------|----------|\n| `E1001 Invalid Credentials` | Missing API key | Set `BIOME_API_KEY` in `. env` |\n| `E2002 Missing Deployment Target` | `BIOME_DEPLOY_TARGET` not set | Set to `staging`, `production`, or `dev` |\n| Empty answers | Ingestion not run | Run `python scripts/seed_index. py` |\n| Slow first query | Cross-encoder loading | Wait 10\u201315s on first query; subsequent queries are faster |",
+      "source": "data\\raw\\onboarding.md",
+      "section_heading": "Biome Onboarding Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 627
+    },
+    {
+      "text": "# Security Guide\n\n## Authentication Model\n\nBiome uses token-based authentication. Every API request must include the `BIOME_API_KEY` in the `Authorization` header:\n\n```\nAuthorization: Bearer <BIOME_API_KEY>\n```\n\nTokens are 64-character alphanumeric strings. They do not encode permissions; all token holders have full API access within their plan's rate limits.\n\n## Secret Management\n\n### Never hardcode secrets\n\nAll secrets must be loaded from environment variables. The `.env` file is excluded from version control via `.gitignore`. Use `.env.example` as the template.\n\n### Required secrets\n\n| Secret | Storage recommendation |\n|--------|----------------------|\n| `BIOME_API_KEY` | Environment variable or secrets manager |\n| `OPENAI_API_KEY` | Environment variable or secrets manager |\n| `ANTHROPI",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "` | Environment variable or secrets manager |\n| `OPENAI_API_KEY` | Environment variable or secrets manager |\n| `ANTHROPIC_API_KEY` | Environment variable or secrets manager |\n\n### Docker secrets\n\nIn Docker Compose, mount secrets via environment variables, not hardcoded values in `docker-compose.yml`:\n\n```yaml\nenv_file:\n  - .env\n```\n\nIn Kubernetes, use `Secret` resources and mount them as environment variables \u2014 never as config maps.\n\n## Data Security\n\n### Data at rest\n\nChromaDB vector embeddings and BM25 index files are stored in `data/index/`. These files contain document embeddings but not the original plaintext. Original documents are stored in `data/raw/` and processed chunks in `data/processed/chunks.json`.\n\nFor sensitive corpora, encrypt the `data/` directory at the filesystem level ",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "d chunks in `data/processed/chunks.json`.\n\nFor sensitive corpora, encrypt the `data/` directory at the filesystem level (e.g., with LUKS on Linux or BitLocker on Windows).\n\n### Data in transit\n\nAll API calls between the dashboard and API use HTTP. For production deployments, place both services behind a TLS-terminating reverse proxy (e.g., nginx or Caddy).\n\n### LLM data privacy\n\nWhen using `LLM_PROVIDER=openai` or `LLM_PROVIDER=anthropic`, document chunks are sent to third-party APIs as part of the prompt. Ensure your data use agreement with OpenAI or Anthropic covers your use case. For sensitive internal documentation, prefer `LLM_PROVIDER=ollama` to keep all data local.\n\n## Input Validation\n\nThe API validates all inputs with Pydantic schemas. Empty questions are rejected before retrieval",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "\n\n## Input Validation\n\nThe API validates all inputs with Pydantic schemas. Empty questions are rejected before retrieval. Document text submitted via `POST /v1/ingest` is sanitised by the loader (HTML tags stripped, encoding normalised) before storage.\n\n## Rate Limiting\n\nThe API enforces per-key rate limits. Exceeding limits returns E1002 with a `Retry-After` header. Implement exponential backoff in clients to handle rate limit responses gracefully.\n\n## Audit Logging\n\nAll API requests are logged at `INFO` level including the endpoint, response status, and timestamp. Question text is logged at `INFO` level. Document content is not logged. Set `LOG_LEVEL=WARNING` in production to reduce log volume.\n\n## Vulnerability Disclosure\n\nReport security vulnerabilities to the project maintainer. Do no",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "ion to reduce log volume.\n\n## Vulnerability Disclosure\n\nReport security vulnerabilities to the project maintainer. Do not open public GitHub issues for security concerns.\n",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "fixed",
+      "character_count": 171
+    },
+    {
+      "text": "# Security Guide",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "structure",
+      "character_count": 16
+    },
+    {
+      "text": "## Authentication Model\n\nBiome uses token-based authentication. Every API request must include the `BIOME_API_KEY` in the `Authorization` header:\n\n```\nAuthorization: Bearer <BIOME_API_KEY>\n```\n\nTokens are 64-character alphanumeric strings. They do not encode permissions; all token holders have full API access within their plan's rate limits.",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "structure",
+      "character_count": 343
+    },
+    {
+      "text": "## Secret Management",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "structure",
+      "character_count": 20
+    },
+    {
+      "text": "### Never hardcode secrets\n\nAll secrets must be loaded from environment variables. The `.env` file is excluded from version control via `.gitignore`. Use `.env.example` as the template.",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "structure",
+      "character_count": 185
+    },
+    {
+      "text": "### Required secrets\n\n| Secret | Storage recommendation |\n|--------|----------------------|\n| `BIOME_API_KEY` | Environment variable or secrets manager |\n| `OPENAI_API_KEY` | Environment variable or secrets manager |\n| `ANTHROPIC_API_KEY` | Environment variable or secrets manager |",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "structure",
+      "character_count": 282
+    },
+    {
+      "text": "### Docker secrets\n\nIn Docker Compose, mount secrets via environment variables, not hardcoded values in `docker-compose.yml`:\n\n```yaml\nenv_file:\n  - .env\n```\n\nIn Kubernetes, use `Secret` resources and mount them as environment variables \u2014 never as config maps.",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "structure",
+      "character_count": 260
+    },
+    {
+      "text": "## Data Security",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "structure",
+      "character_count": 16
+    },
+    {
+      "text": "### Data at rest\n\nChromaDB vector embeddings and BM25 index files are stored in `data/index/`. These files contain document embeddings but not the original plaintext. Original documents are stored in `data/raw/` and processed chunks in `data/processed/chunks.json`.\n\nFor sensitive corpora, encrypt the `data/` directory at the filesystem level (e.g., with LUKS on Linux or BitLocker on Windows).",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 7,
+      "chunking_strategy": "structure",
+      "character_count": 395
+    },
+    {
+      "text": "### Data in transit\n\nAll API calls between the dashboard and API use HTTP. For production deployments, place both services behind a TLS-terminating reverse proxy (e.g., nginx or Caddy).",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 8,
+      "chunking_strategy": "structure",
+      "character_count": 185
+    },
+    {
+      "text": "### LLM data privacy\n\nWhen using `LLM_PROVIDER=openai` or `LLM_PROVIDER=anthropic`, document chunks are sent to third-party APIs as part of the prompt. Ensure your data use agreement with OpenAI or Anthropic covers your use case. For sensitive internal documentation, prefer `LLM_PROVIDER=ollama` to keep all data local.",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 9,
+      "chunking_strategy": "structure",
+      "character_count": 320
+    },
+    {
+      "text": "## Input Validation\n\nThe API validates all inputs with Pydantic schemas. Empty questions are rejected before retrieval. Document text submitted via `POST /v1/ingest` is sanitised by the loader (HTML tags stripped, encoding normalised) before storage.",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 10,
+      "chunking_strategy": "structure",
+      "character_count": 250
+    },
+    {
+      "text": "## Rate Limiting\n\nThe API enforces per-key rate limits. Exceeding limits returns E1002 with a `Retry-After` header. Implement exponential backoff in clients to handle rate limit responses gracefully.",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 11,
+      "chunking_strategy": "structure",
+      "character_count": 199
+    },
+    {
+      "text": "## Audit Logging\n\nAll API requests are logged at `INFO` level including the endpoint, response status, and timestamp. Question text is logged at `INFO` level. Document content is not logged. Set `LOG_LEVEL=WARNING` in production to reduce log volume.",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 12,
+      "chunking_strategy": "structure",
+      "character_count": 250
+    },
+    {
+      "text": "## Vulnerability Disclosure\n\nReport security vulnerabilities to the project maintainer. Do not open public GitHub issues for security concerns.",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 13,
+      "chunking_strategy": "structure",
+      "character_count": 143
+    },
+    {
+      "text": "# Security Guide\n\n## Authentication Model\n\nBiome uses token-based authentication. Every API request must include the `BIOME_API_KEY` in the `Authorization` header:\n\n```\nAuthorization: Bearer <BIOME_API_KEY>\n```\n\nTokens are 64-character alphanumeric strings. They do not encode permissions; all token holders have full API access within their plan's rate limits. ## Secret Management\n\n### Never hardcode secrets\n\nAll secrets must be loaded from environment variables. The `. env` file is excluded from version control via `. gitignore`. Use `. env. example` as the template",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "semantic",
+      "character_count": 572
+    },
+    {
+      "text": "### Required secrets\n\n| Secret | Storage recommendation |\n|--------|----------------------|\n| `BIOME_API_KEY` | Environment variable or secrets manager |\n| `OPENAI_API_KEY` | Environment variable or secrets manager |\n| `ANTHROPIC_API_KEY` | Environment variable or secrets manager |\n\n### Docker secrets\n\nIn Docker Compose, mount secrets via environment variables, not hardcoded values in `docker-compose. yml`:\n\n```yaml\nenv_file:\n  -. env\n```\n\nIn Kubernetes, use `Secret` resources and mount them as environment variables \u2014 never as config maps. ## Data Security\n\n### Data at rest\n\nChromaDB vector embeddings and BM25 index files are stored in `data/index/`. These files contain document embeddings but not the original plaintext",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 729
+    },
+    {
+      "text": "Empty questions are rejected before retrieval. Document text submitted via `POST /v1/ingest` is sanitised by the loader (HTML tags stripped, encoding normalised) before storage. ## Rate Limiting\n\nThe API enforces per-key rate limits. Exceeding limits returns E1002 with a `Retry-After` header. Implement exponential backoff in clients to handle rate limit responses gracefully. ## Audit Logging\n\nAll API requests are logged at `INFO` level including the endpoint, response status, and timestamp. Question text is logged at `INFO` level. Document content is not logged. Set `LOG_LEVEL=WARNING` in production to reduce log volume. ## Vulnerability Disclosure\n\nReport security vulnerabilities to the project maintainer. Do not open public GitHub issues for security concerns",
+      "source": "data\\raw\\security.md",
+      "section_heading": "Security Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 771
+    },
+    {
+      "text": "# Troubleshooting Guide\n\n## Ingestion Problems\n\n### Problem: Zero chunks produced after ingestion\n\n**Symptom:** `seed_index.py` reports `Chunks created: 0`\n\n**Causes and solutions:**\n1. Documents in `data/raw/` are in an unsupported format. Check that files end in `.md`, `.txt`, `.html`, `.htm`, or `.pdf`.\n2. All documents are empty. Open each file and confirm it has content.\n3. Near-duplicate detection is too aggressive. Lower `DEDUP_THRESHOLD` in `.env` (default `0.95`).\n\n### Problem: Error E3001 \u2014 Chunking Failed\n\nReturned when ingestion succeeds but chunking produces zero output for a document. Usually caused by a document with only whitespace or special characters. Check the raw file and ensure it contains readable text.\n\n### Problem: Error E3002 \u2014 Index Out of Sync\n\nThe BM25 index an",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "heck the raw file and ensure it contains readable text.\n\n### Problem: Error E3002 \u2014 Index Out of Sync\n\nThe BM25 index and ChromaDB vector store contain different chunk counts. This happens if ingestion is interrupted mid-run.\n\n**Solution:** Delete the index directory and re-run ingestion:\n```bash\nrm -rf data/index/\npython scripts/seed_index.py\n```\n\n### Problem: ChromaDB fails to open\n\nIf ChromaDB raises a schema migration error, the database format has changed between package versions.\n\n**Solution:** Delete the Chroma directory and re-index:\n```bash\nrm -rf data/index/chroma/\npython scripts/seed_index.py\n```\n\n## Retrieval Problems\n\n### Problem: All answers are \"I don't know\"\n\n**Causes:**\n1. Ingestion has not been run (indexes are empty). Run `python scripts/seed_index.py`.\n2. `INSUFFICIENT_",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "w\"\n\n**Causes:**\n1. Ingestion has not been run (indexes are empty). Run `python scripts/seed_index.py`.\n2. `INSUFFICIENT_CONFIDENCE_THRESHOLD` is too high. Lower it in `.env` (try `0.2`).\n3. The cross-encoder model failed to load, and the fallback keyword overlap is too weak. Check logs for `CrossEncoder` load errors.\n\n### Problem: Wrong documents retrieved\n\nThe query might be too short or ambiguous. Try adding more context. If exact-term queries are failing, ensure the BM25 index is built (check `data/index/bm25_index.pkl` exists).\n\n### Problem: Slow queries\n\nThe cross-encoder reranker runs on CPU by default. First-query latency includes model loading (~5s). Subsequent queries are faster (~0.1\u20130.3s for reranking).\n\nFor consistently faster queries:\n- Use `LLM_PROVIDER=openai` with a fast mo",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "eries are faster (~0.1\u20130.3s for reranking).\n\nFor consistently faster queries:\n- Use `LLM_PROVIDER=openai` with a fast model like `gpt-4o-mini`\n- Reduce `DENSE_TOP_K` to `3`\n\n## Generation Problems\n\n### Problem: LLM returns generic answers not from the documents\n\nThe LLM is ignoring the context. Check:\n1. `MAX_CONTEXT_TOKENS` is high enough (raise to `2000`).\n2. The context chunks are relevant (check `retrieved_chunks` in the API response).\n3. The LLM provider is set correctly (`LLM_PROVIDER` in `.env`).\n\n### Problem: Citation numbers in answers don't match chunks\n\nCitation parsing depends on the LLM strictly following the `[n]` format. Some smaller models (like `llama3.2:3b`) may not follow the instruction reliably. Use a larger model or `openai`/`anthropic` for reliable citations.\n\n### Pr",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "fixed",
+      "character_count": 800
+    },
+    {
+      "text": "3b`) may not follow the instruction reliably. Use a larger model or `openai`/`anthropic` for reliable citations.\n\n### Problem: Ollama connection refused\n\nEnsure Ollama is running before starting the API:\n```bash\nollama serve\n```\n\nPull the model if it's not downloaded:\n```bash\nollama pull llama3.2:3b\n```\n\n## Docker Problems\n\n### Problem: Services cannot reach each other\n\nThe dashboard must reach the API using the Docker service name, not `localhost`. Ensure `API_BASE=http://api:8000` is set in the dashboard service environment.\n\n### Problem: Index files missing in container\n\nMount the `data/` directory as a volume so the index persists across container restarts:\n```yaml\nvolumes:\n  - ./data:/app/data\n```\n",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "fixed",
+      "character_count": 712
+    },
+    {
+      "text": "# Troubleshooting Guide",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 0,
+      "chunking_strategy": "structure",
+      "character_count": 23
+    },
+    {
+      "text": "## Ingestion Problems",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "structure",
+      "character_count": 21
+    },
+    {
+      "text": "### Problem: Zero chunks produced after ingestion\n\n**Symptom:** `seed_index.py` reports `Chunks created: 0`\n\n**Causes and solutions:**\n1. Documents in `data/raw/` are in an unsupported format. Check that files end in `.md`, `.txt`, `.html`, `.htm`, or `.pdf`.\n2. All documents are empty. Open each file and confirm it has content.\n3. Near-duplicate detection is too aggressive. Lower `DEDUP_THRESHOLD` in `.env` (default `0.95`).",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "structure",
+      "character_count": 429
+    },
+    {
+      "text": "### Problem: Error E3001 \u2014 Chunking Failed\n\nReturned when ingestion succeeds but chunking produces zero output for a document. Usually caused by a document with only whitespace or special characters. Check the raw file and ensure it contains readable text.",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "structure",
+      "character_count": 256
+    },
+    {
+      "text": "### Problem: Error E3002 \u2014 Index Out of Sync\n\nThe BM25 index and ChromaDB vector store contain different chunk counts. This happens if ingestion is interrupted mid-run.\n\n**Solution:** Delete the index directory and re-run ingestion:\n```bash\nrm -rf data/index/\npython scripts/seed_index.py\n```",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "structure",
+      "character_count": 292
+    },
+    {
+      "text": "### Problem: ChromaDB fails to open\n\nIf ChromaDB raises a schema migration error, the database format has changed between package versions.\n\n**Solution:** Delete the Chroma directory and re-index:\n```bash\nrm -rf data/index/chroma/\npython scripts/seed_index.py\n```",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 5,
+      "chunking_strategy": "structure",
+      "character_count": 263
+    },
+    {
+      "text": "## Retrieval Problems",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 6,
+      "chunking_strategy": "structure",
+      "character_count": 21
+    },
+    {
+      "text": "### Problem: All answers are \"I don't know\"\n\n**Causes:**\n1. Ingestion has not been run (indexes are empty). Run `python scripts/seed_index.py`.\n2. `INSUFFICIENT_CONFIDENCE_THRESHOLD` is too high. Lower it in `.env` (try `0.2`).\n3. The cross-encoder model failed to load, and the fallback keyword overlap is too weak. Check logs for `CrossEncoder` load errors.",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 7,
+      "chunking_strategy": "structure",
+      "character_count": 359
+    },
+    {
+      "text": "### Problem: Wrong documents retrieved\n\nThe query might be too short or ambiguous. Try adding more context. If exact-term queries are failing, ensure the BM25 index is built (check `data/index/bm25_index.pkl` exists).",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 8,
+      "chunking_strategy": "structure",
+      "character_count": 217
+    },
+    {
+      "text": "### Problem: Slow queries\n\nThe cross-encoder reranker runs on CPU by default. First-query latency includes model loading (~5s). Subsequent queries are faster (~0.1\u20130.3s for reranking).\n\nFor consistently faster queries:\n- Use `LLM_PROVIDER=openai` with a fast model like `gpt-4o-mini`\n- Reduce `DENSE_TOP_K` to `3`",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 9,
+      "chunking_strategy": "structure",
+      "character_count": 313
+    },
+    {
+      "text": "## Generation Problems",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 10,
+      "chunking_strategy": "structure",
+      "character_count": 22
+    },
+    {
+      "text": "### Problem: LLM returns generic answers not from the documents\n\nThe LLM is ignoring the context. Check:\n1. `MAX_CONTEXT_TOKENS` is high enough (raise to `2000`).\n2. The context chunks are relevant (check `retrieved_chunks` in the API response).\n3. The LLM provider is set correctly (`LLM_PROVIDER` in `.env`).",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 11,
+      "chunking_strategy": "structure",
+      "character_count": 310
+    },
+    {
+      "text": "### Problem: Citation numbers in answers don't match chunks\n\nCitation parsing depends on the LLM strictly following the `[n]` format. Some smaller models (like `llama3.2:3b`) may not follow the instruction reliably. Use a larger model or `openai`/`anthropic` for reliable citations.",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 12,
+      "chunking_strategy": "structure",
+      "character_count": 282
+    },
+    {
+      "text": "### Problem: Ollama connection refused\n\nEnsure Ollama is running before starting the API:\n```bash\nollama serve\n```\n\nPull the model if it's not downloaded:\n```bash\nollama pull llama3.2:3b\n```",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 13,
+      "chunking_strategy": "structure",
+      "character_count": 190
+    },
+    {
+      "text": "## Docker Problems",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 14,
+      "chunking_strategy": "structure",
+      "character_count": 18
+    },
+    {
+      "text": "### Problem: Services cannot reach each other\n\nThe dashboard must reach the API using the Docker service name, not `localhost`. Ensure `API_BASE=http://api:8000` is set in the dashboard service environment.",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 15,
+      "chunking_strategy": "structure",
+      "character_count": 206
+    },
+    {
+      "text": "### Problem: Index files missing in container\n\nMount the `data/` directory as a volume so the index persists across container restarts:\n```yaml\nvolumes:\n  - ./data:/app/data\n```",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 16,
+      "chunking_strategy": "structure",
+      "character_count": 177
+    },
+    {
+      "text": "### Problem: Error E3002 \u2014 Index Out of Sync\n\nThe BM25 index and ChromaDB vector store contain different chunk counts. This happens if ingestion is interrupted mid-run. **Solution:** Delete the index directory and re-run ingestion:\n```bash\nrm -rf data/index/\npython scripts/seed_index. py\n```\n\n### Problem: ChromaDB fails to open\n\nIf ChromaDB raises a schema migration error, the database format has changed between package versions. **Solution:** Delete the Chroma directory and re-index:\n```bash\nrm -rf data/index/chroma/\npython scripts/seed_index. py\n```\n\n## Retrieval Problems\n\n### Problem: All answers are \"I don't know\"\n\n**Causes:**\n1. Ingestion has not been run (indexes are empty). Run `python scripts/seed_index. py`. 2. `INSUFFICIENT_CONFIDENCE_THRESHOLD` is too high. Lower it in `. env` (try `0. 2`). 3",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 1,
+      "chunking_strategy": "semantic",
+      "character_count": 814
+    },
+    {
+      "text": "The cross-encoder model failed to load, and the fallback keyword overlap is too weak. Check logs for `CrossEncoder` load errors. ### Problem: Wrong documents retrieved\n\nThe query might be too short or ambiguous. Try adding more context. If exact-term queries are failing, ensure the BM25 index is built (check `data/index/bm25_index. pkl` exists). ### Problem: Slow queries\n\nThe cross-encoder reranker runs on CPU by default. First-query latency includes model loading (~5s). Subsequent queries are faster (~0. 1\u20130. 3s for reranking). For consistently faster queries:\n- Use `LLM_PROVIDER=openai` with a fast model like `gpt-4o-mini`\n- Reduce `DENSE_TOP_K` to `3`\n\n## Generation Problems\n\n### Problem: LLM returns generic answers not from the documents\n\nThe LLM is ignoring the context. Check:\n1",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 2,
+      "chunking_strategy": "semantic",
+      "character_count": 794
+    },
+    {
+      "text": "`MAX_CONTEXT_TOKENS` is high enough (raise to `2000`). 2. The context chunks are relevant (check `retrieved_chunks` in the API response). 3. The LLM provider is set correctly (`LLM_PROVIDER` in `. env`). ### Problem: Citation numbers in answers don't match chunks\n\nCitation parsing depends on the LLM strictly following the `[n]` format. Some smaller models (like `llama3. 2:3b`) may not follow the instruction reliably. Use a larger model or `openai`/`anthropic` for reliable citations. ### Problem: Ollama connection refused\n\nEnsure Ollama is running before starting the API:\n```bash\nollama serve\n```\n\nPull the model if it's not downloaded:\n```bash\nollama pull llama3",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 3,
+      "chunking_strategy": "semantic",
+      "character_count": 669
+    },
+    {
+      "text": "2:3b\n```\n\n## Docker Problems\n\n### Problem: Services cannot reach each other\n\nThe dashboard must reach the API using the Docker service name, not `localhost`. Ensure `API_BASE=http://api:8000` is set in the dashboard service environment. ### Problem: Index files missing in container\n\nMount the `data/` directory as a volume so the index persists across container restarts:\n```yaml\nvolumes:\n  -. /data:/app/data\n```",
+      "source": "data\\raw\\troubleshooting.md",
+      "section_heading": "Troubleshooting Guide",
+      "page_number": null,
+      "chunk_index": 4,
+      "chunking_strategy": "semantic",
+      "character_count": 414
     }
   ],
   "summary": {
-    "documents_processed": 2,
-    "chunks_created": 8,
+    "documents_processed": 11,
+    "chunks_created": 207,
     "chunks_per_strategy": {
-      "fixed": 2,
-      "structure": 6,
-      "semantic": 0
+      "fixed": 52,
+      "structure": 115,
+      "semantic": 40
     },
-    "duplicates_skipped": 2
+    "duplicates_skipped": 23
   }
 }

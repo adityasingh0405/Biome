@@ -1,30 +1,60 @@
 version: "3.9"
+
 services:
-  api:
-    image: python:3.11-slim
+  # ------------------------------------------------------------------
+  # One-shot seed service: indexes the sample corpus on first startup
+  # ------------------------------------------------------------------
+  seed:
+    build: .
     working_dir: /app
-    command: sh -c "pip install -r requirements.txt && python -m uvicorn biome_rag.api.app:app --host 0.0.0.0 --port 8000"
+    command: python scripts/seed_index.py
     volumes:
-      - .:/app
+      - ./data:/app/data
+    env_file:
+      - .env
+    restart: "no"
+
+  # ------------------------------------------------------------------
+  # FastAPI backend
+  # ------------------------------------------------------------------
+  api:
+    build: .
+    working_dir: /app
+    command: >
+      sh -c "python scripts/seed_index.py --validate-only ||
+             python scripts/seed_index.py &&
+             uvicorn biome_rag.api.app:app --host 0.0.0.0 --port 8000 --workers 1"
+    volumes:
+      - ./data:/app/data
     ports:
       - "8000:8000"
-    depends_on:
-      - chroma
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
+  # ------------------------------------------------------------------
+  # Streamlit dashboard
+  # ------------------------------------------------------------------
   dashboard:
-    image: python:3.11-slim
+    build: .
     working_dir: /app
-    command: sh -c "pip install -r requirements.txt streamlit && streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0"
-    volumes:
-      - .:/app
+    command: streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true
     ports:
       - "8501:8501"
-    depends_on:
-      - api
     environment:
       API_BASE: http://api:8000
+    env_file:
+      - .env
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
 
-  chroma:
-    image: ghcr.io/chroma-core/chroma:latest
-    ports:
-      - "8001:8000"
+volumes:
+  data:

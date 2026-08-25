@@ -1,0 +1,387 @@
+[
+  {
+    "id": "Q001",
+    "question": "How do I authenticate with the Biome API?",
+    "golden_answer": "Set the BIOME_API_KEY environment variable and include it as a Bearer token in the Authorization header of every API request.",
+    "expected_chunk_ids": ["api-reference.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q002",
+    "question": "What error code is returned for invalid credentials?",
+    "golden_answer": "E1001 is returned for invalid credentials, indicating the API key is missing, malformed, or revoked.",
+    "expected_chunk_ids": ["api-reference.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q003",
+    "question": "What does error code E2002 mean?",
+    "golden_answer": "E2002 means a Missing Deployment Target. It is returned when a deployment operation is initiated without specifying the BIOME_DEPLOY_TARGET environment variable.",
+    "expected_chunk_ids": ["api-reference.md:0", "error-codes.html:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q004",
+    "question": "What error code signals a rate limit exceeded condition?",
+    "golden_answer": "E1002 is returned when a client exceeds the rate limit of 100 requests per minute.",
+    "expected_chunk_ids": ["api-reference.md:0", "error-codes.html:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q005",
+    "question": "What chunking strategies does Biome support?",
+    "golden_answer": "Biome supports three chunking strategies: fixed-size with overlap, structure-aware splitting on headers, and semantic chunking using topic boundaries.",
+    "expected_chunk_ids": ["architecture.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q006",
+    "question": "What is RRF_DENSE_WEIGHT?",
+    "golden_answer": "RRF_DENSE_WEIGHT is a configuration variable that controls the weight given to dense retrieval ranks in Reciprocal Rank Fusion. The default value is 0.7.",
+    "expected_chunk_ids": ["configuration.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q007",
+    "question": "What is the default value of INSUFFICIENT_CONFIDENCE_THRESHOLD?",
+    "golden_answer": "The default value of INSUFFICIENT_CONFIDENCE_THRESHOLD is 0.5.",
+    "expected_chunk_ids": ["configuration.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q008",
+    "question": "Where is the BM25 index stored?",
+    "golden_answer": "The BM25 index is stored as data/index/bm25_index.pkl.",
+    "expected_chunk_ids": ["configuration.md:0", "architecture.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q009",
+    "question": "What LLM providers does Biome support?",
+    "golden_answer": "Biome supports Ollama for local inference, OpenAI (GPT-4o or GPT-4o-mini), and Anthropic Claude.",
+    "expected_chunk_ids": ["configuration.md:0", "faq.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q010",
+    "question": "How do I start the Streamlit dashboard?",
+    "golden_answer": "Run: streamlit run streamlit_app.py. The dashboard will be available at http://localhost:8501.",
+    "expected_chunk_ids": ["onboarding.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q011",
+    "question": "What is the default chunk size?",
+    "golden_answer": "The default chunk size is 800 characters.",
+    "expected_chunk_ids": ["configuration.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q012",
+    "question": "What port does the FastAPI backend run on by default?",
+    "golden_answer": "The FastAPI backend runs on port 8000.",
+    "expected_chunk_ids": ["onboarding.md:0", "deployment-guide.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q013",
+    "question": "What file formats does Biome support for ingestion?",
+    "golden_answer": "Biome supports Markdown (.md), plain text (.txt), HTML (.html, .htm), and PDF (.pdf) formats.",
+    "expected_chunk_ids": ["onboarding.md:0", "faq.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q014",
+    "question": "What is the deduplication threshold?",
+    "golden_answer": "The deduplication threshold is controlled by DEDUP_THRESHOLD, which defaults to 0.95. Chunks with cosine similarity above this value are considered near-duplicates and are skipped.",
+    "expected_chunk_ids": ["configuration.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q015",
+    "question": "What cross-encoder model is used for reranking?",
+    "golden_answer": "The cross-encoder reranker uses cross-encoder/ms-marco-MiniLM-L-6-v2 from sentence-transformers.",
+    "expected_chunk_ids": ["faq.md:0", "architecture.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q016",
+    "question": "What happens if authentication fails and how do I fix it?",
+    "golden_answer": "If authentication fails with E1001, verify that BIOME_API_KEY is set in your .env file and that the token has not expired. Contact your administrator if the issue persists.",
+    "expected_chunk_ids": ["onboarding.md:0", "security.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q017",
+    "question": "What is the default Ollama model used by Biome?",
+    "golden_answer": "The default Ollama model is llama3.2:3b.",
+    "expected_chunk_ids": ["configuration.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q018",
+    "question": "What API endpoint lists all indexed documents?",
+    "golden_answer": "GET /v1/documents lists all indexed documents with their source paths.",
+    "expected_chunk_ids": ["api-reference.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q019",
+    "question": "How do I submit a question through the API?",
+    "golden_answer": "Send a POST request to /v1/ask with a JSON body containing the question field and optionally a retrieval_mode field (hybrid, dense, or sparse).",
+    "expected_chunk_ids": ["api-reference.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q020",
+    "question": "What is the EMBEDDING_COLLECTION_NAME default?",
+    "golden_answer": "The default EMBEDDING_COLLECTION_NAME is biome-chunks.",
+    "expected_chunk_ids": ["configuration.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q021",
+    "question": "Why is hybrid retrieval better than dense-only search, and when does the advantage appear?",
+    "golden_answer": "Hybrid retrieval combines dense semantic search with BM25 keyword search via Reciprocal Rank Fusion. The advantage is most pronounced for queries containing exact configuration keys like BIOME_API_KEY or error codes like E1001, where BM25 finds exact matches that embedding models tend to smooth over.",
+    "expected_chunk_ids": ["faq.md:0", "architecture.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q022",
+    "question": "If I get error E2002, what environment variable do I need to set and what values are allowed?",
+    "golden_answer": "Set BIOME_DEPLOY_TARGET to dev, staging, or production. E2002 is returned when a deployment is initiated without this variable.",
+    "expected_chunk_ids": ["error-codes.html:0", "configuration.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q023",
+    "question": "What is the complete latency budget for a query when using the Ollama provider?",
+    "golden_answer": "Typical total latency with Ollama is 5 to 20 seconds: dense retrieval 50-150ms, BM25 under 5ms, RRF under 1ms, cross-encoder reranking 100-300ms, and Ollama generation 3 to 15 seconds.",
+    "expected_chunk_ids": ["architecture.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q024",
+    "question": "I want to keep all data local and not send anything to external APIs. What settings should I use?",
+    "golden_answer": "Set LLM_PROVIDER=ollama and EMBEDDING_PROVIDER=sentence-transformers. This keeps all inference and embeddings local. Ensure Ollama is running and the model is pulled.",
+    "expected_chunk_ids": ["configuration.md:0", "security.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q025",
+    "question": "What happens step by step when I run docker compose up?",
+    "golden_answer": "Docker builds the image, runs the seed script to index the sample corpus, then starts the API on port 8000 and the Streamlit dashboard on port 8501.",
+    "expected_chunk_ids": ["deployment-guide.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q026",
+    "question": "If E3002 occurs, what causes it and what is the resolution?",
+    "golden_answer": "E3002 means the BM25 index and ChromaDB vector store contain different chunk counts, usually from an interrupted ingestion. The resolution is to delete data/index/ and re-run seed_index.py to rebuild both indexes.",
+    "expected_chunk_ids": ["error-codes.html:0", "troubleshooting.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q027",
+    "question": "How should I configure Kubernetes resource requests for the Biome API service?",
+    "golden_answer": "The recommended Kubernetes resource request for the API is 500m CPU and 512Mi memory. The API is stateless and can be scaled horizontally.",
+    "expected_chunk_ids": ["deployment-guide.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q028",
+    "question": "How does citation verification work in Biome?",
+    "golden_answer": "After generation, each [n] citation is paired with the claim it supports. A verifier checks whether the referenced chunk actually supports the claim, using LLM-as-judge when an API key is available or rule-based keyword overlap otherwise. Unverified citations are flagged with verified: false.",
+    "expected_chunk_ids": ["faq.md:0", "api-reference.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q029",
+    "question": "What chunking strategy is best for Markdown documentation and why?",
+    "golden_answer": "Structure-aware chunking is best for Markdown because it splits on header boundaries, preserving the semantic structure of sections. Fixed chunking can cut across sections, and semantic chunking is slower.",
+    "expected_chunk_ids": ["architecture.md:0", "faq.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q030",
+    "question": "What are the three API endpoints and what does each one do?",
+    "golden_answer": "POST /v1/ask answers questions with citations and confidence scores. GET /v1/documents lists all indexed documents. POST /v1/ingest accepts new documents for indexing.",
+    "expected_chunk_ids": ["api-reference.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q031",
+    "question": "What rate limit applies to the Free plan and what should a client do when it is exceeded?",
+    "golden_answer": "The Free plan allows 20 requests per minute and 500 per day. When the limit is exceeded (E1002), the client should implement exponential backoff and wait for the number of seconds in the Retry-After header.",
+    "expected_chunk_ids": ["api-reference.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q032",
+    "question": "What is the difference between the BM25 index and the ChromaDB vector store?",
+    "golden_answer": "The BM25 index is a sparse keyword index stored as a pickle file, used for exact-term retrieval. ChromaDB is a dense vector store that stores embedding representations of chunks, enabling semantic similarity search.",
+    "expected_chunk_ids": ["architecture.md:0", "configuration.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q033",
+    "question": "How does Biome prevent hallucination?",
+    "golden_answer": "Biome uses a grounded system prompt instructing the LLM to answer only from the numbered context blocks. If confidence is below the threshold it returns a structured I-don't-know response. Citation verification flags any claims not supported by the retrieved context.",
+    "expected_chunk_ids": ["faq.md:0", "architecture.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q034",
+    "question": "What is the purpose of the /health endpoint and what does it return?",
+    "golden_answer": "The /health endpoint returns system health information including the indexed chunk count, storage directory path, and processed directory path. It is used as a readiness and liveness probe.",
+    "expected_chunk_ids": ["api-reference.md:0", "deployment-guide.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q035",
+    "question": "If I have a sensitive internal corpus I cannot send to OpenAI, what is the recommended setup?",
+    "golden_answer": "Use LLM_PROVIDER=ollama and EMBEDDING_PROVIDER=sentence-transformers to keep all data local. For citation verification, the rule-based judge will be used automatically since no API key is present.",
+    "expected_chunk_ids": ["security.md:0", "configuration.md:0"],
+    "question_type": "multi_hop"
+  },
+  {
+    "id": "Q036",
+    "question": "What is the capital of France?",
+    "golden_answer": "I don't know. The provided context does not contain this information.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q037",
+    "question": "What is the salary range for Biome engineers?",
+    "golden_answer": "I don't know. The provided context does not contain this information.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q038",
+    "question": "What is the phone number for Biome support?",
+    "golden_answer": "I don't know. The provided context does not contain this information.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q039",
+    "question": "Who is the CEO of Biome?",
+    "golden_answer": "I don't know. The provided context does not contain this information.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q040",
+    "question": "What is the maximum number of documents Biome can index?",
+    "golden_answer": "I don't know. The provided context does not specify a maximum document count.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q041",
+    "question": "What database does Biome use for user authentication?",
+    "golden_answer": "I don't know. The provided context describes token-based API authentication but does not mention a user authentication database.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q042",
+    "question": "What is the license for Biome RAG?",
+    "golden_answer": "I don't know. The provided context does not mention a software license.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q043",
+    "question": "What version of Python is required for Biome?",
+    "golden_answer": "I don't know. The provided context does not specify a Python version requirement.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q044",
+    "question": "Does Biome support real-time streaming of answers?",
+    "golden_answer": "I don't know. The provided context does not mention streaming support.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q045",
+    "question": "What is the cost of the Enterprise plan?",
+    "golden_answer": "I don't know. The provided context mentions that the Enterprise plan has unlimited requests but does not state a price.",
+    "expected_chunk_ids": [],
+    "question_type": "unanswerable"
+  },
+  {
+    "id": "Q046",
+    "question": "How do I search documents?",
+    "golden_answer": "Send a POST request to /v1/ask with your question. The system will use hybrid retrieval to find relevant chunks and return a grounded answer.",
+    "expected_chunk_ids": ["api-reference.md:0", "faq.md:0"],
+    "question_type": "ambiguous"
+  },
+  {
+    "id": "Q047",
+    "question": "What model should I use?",
+    "golden_answer": "For local development use LLM_PROVIDER=ollama with the default llama3.2:3b model. For better quality use openai with gpt-4o-mini or anthropic with claude-sonnet-4-5.",
+    "expected_chunk_ids": ["configuration.md:0"],
+    "question_type": "ambiguous"
+  },
+  {
+    "id": "Q048",
+    "question": "What is the best configuration for performance?",
+    "golden_answer": "For faster queries, use LLM_PROVIDER=openai with gpt-4o-mini, reduce DENSE_TOP_K to 3, and increase MAX_CONTEXT_TOKENS if answers seem truncated.",
+    "expected_chunk_ids": ["configuration.md:0", "troubleshooting.md:0"],
+    "question_type": "ambiguous"
+  },
+  {
+    "id": "Q049",
+    "question": "How do I update the index?",
+    "golden_answer": "To add new documents, use POST /v1/ingest with the new document content. To fully rebuild the index, re-run python scripts/seed_index.py.",
+    "expected_chunk_ids": ["api-reference.md:0", "onboarding.md:0"],
+    "question_type": "ambiguous"
+  },
+  {
+    "id": "Q050",
+    "question": "Is Biome secure?",
+    "golden_answer": "Biome uses token-based authentication and never hardcodes secrets. For sensitive data, use the local Ollama provider to avoid sending content to external APIs. TLS should be added via a reverse proxy for production deployments.",
+    "expected_chunk_ids": ["security.md:0"],
+    "question_type": "ambiguous"
+  },
+  {
+    "id": "Q051",
+    "question": "What is the Retry-After header used for?",
+    "golden_answer": "The Retry-After header specifies the number of seconds a client should wait before retrying after receiving a rate limit error (E1002).",
+    "expected_chunk_ids": ["api-reference.md:0", "error-codes.html:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q052",
+    "question": "What is E1003?",
+    "golden_answer": "E1003 means the BIOME_API_KEY has expired (tokens expire after 90 days). The resolution is to request a new token from your administrator.",
+    "expected_chunk_ids": ["error-codes.html:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q053",
+    "question": "How do I configure the maximum number of tokens passed to the LLM?",
+    "golden_answer": "Set MAX_CONTEXT_TOKENS in your .env file. The default is 1500 tokens.",
+    "expected_chunk_ids": ["configuration.md:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q054",
+    "question": "What changed in version 0.3.0?",
+    "golden_answer": "Version 0.3.0 added hybrid retrieval with RRF, a cross-encoder reranker, three chunking strategies, near-duplicate detection, confidence scoring, a Streamlit dashboard with hybrid vs dense-only comparison, and Docker Compose support.",
+    "expected_chunk_ids": ["changelog.txt:0"],
+    "question_type": "simple"
+  },
+  {
+    "id": "Q055",
+    "question": "How do I fix a ChromaDB schema error on startup?",
+    "golden_answer": "Delete data/index/chroma/ and re-run ingestion. The Chroma schema can change between package versions.",
+    "expected_chunk_ids": ["troubleshooting.md:0"],
+    "question_type": "simple"
+  }
+]

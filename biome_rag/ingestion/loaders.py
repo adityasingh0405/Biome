@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import re
+import logging
 from pathlib import Path
 from typing import Iterable
 
 from .models import NormalizedDocument
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoader:
@@ -43,9 +46,35 @@ class HtmlLoader(BaseLoader):
 
 class PdfLoader(BaseLoader):
     def load(self, path: Path) -> NormalizedDocument:
-        text = path.read_text(encoding="utf-8")
+        text = ""
         page_number = self._extract_page_number(path.name)
-        return NormalizedDocument(text=text, source=str(path), page_number=page_number)
+
+        try:
+            # Try modern pypdf first
+            try:
+                from pypdf import PdfReader
+            except ImportError:
+                # Fallback to older PyPDF2
+                from PyPDF2 import PdfReader  # type: ignore
+
+            with path.open("rb") as fh:
+                reader = PdfReader(fh)
+                pages_text = []
+                for page in reader.pages:
+                    page_text = page.extract_text() or ""
+                    pages_text.append(page_text)
+                text = "\n".join(pages_text)
+
+        except ImportError as e:
+            logger.warning(f"PDF library not installed: {e}. Skipping PDF extraction.")
+        except Exception as e:
+            logger.warning(f"Failed to extract text from PDF {path}: {e}")
+
+        return NormalizedDocument(
+            text=text,
+            source=str(path),
+            page_number=page_number
+        )
 
     def _extract_page_number(self, name: str) -> int | None:
         match = re.search(r"p(?:age)?[-_ ]?(\d+)", name, flags=re.I)

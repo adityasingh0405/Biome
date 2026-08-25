@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Biome Error Codes Reference</title>
+</head>
+<body>
+<h1>Error Codes Reference</h1>
+
+<h2>Authentication Errors (E1xxx)</h2>
+
+<h3>E1001 — Invalid Credentials</h3>
+<p>Returned when the BIOME_API_KEY is missing, malformed, or revoked. HTTP status: 401.</p>
+<p><strong>Resolution:</strong> Set the BIOME_API_KEY environment variable and verify the token has not expired. Contact your administrator if the issue persists.</p>
+
+<h3>E1002 — Rate Limit Exceeded</h3>
+<p>The client has sent more than 100 requests per minute. HTTP status: 429.</p>
+<p><strong>Resolution:</strong> Implement exponential backoff. The Retry-After header specifies the number of seconds to wait before retrying.</p>
+
+<h3>E1003 — Token Expired</h3>
+<p>The BIOME_API_KEY has passed its expiry date (90 days). HTTP status: 401.</p>
+<p><strong>Resolution:</strong> Request a new token from your administrator.</p>
+
+<h2>Resource Errors (E2xxx)</h2>
+
+<h3>E2001 — Resource Not Found</h3>
+<p>The requested document, chunk, or collection does not exist. HTTP status: 404.</p>
+<p><strong>Resolution:</strong> Verify the resource ID. Ensure the corpus has been indexed by running seed_index.py.</p>
+
+<h3>E2002 — Missing Deployment Target</h3>
+<p>A deployment was initiated without a BIOME_DEPLOY_TARGET environment variable. HTTP status: 400.</p>
+<p><strong>Resolution:</strong> Set BIOME_DEPLOY_TARGET to dev, staging, or production before deploying.</p>
+
+<h3>E2003 — Collection Already Exists</h3>
+<p>Attempted to create a ChromaDB collection that already exists with a different schema. HTTP status: 409.</p>
+<p><strong>Resolution:</strong> Delete data/index/chroma/ and re-run ingestion, or change EMBEDDING_COLLECTION_NAME in .env.</p>
+
+<h2>Ingestion Errors (E3xxx)</h2>
+
+<h3>E3001 — Chunking Failed</h3>
+<p>Ingestion succeeded but chunking produced zero chunks from a document. HTTP status: 422.</p>
+<p><strong>Resolution:</strong> Ensure the document is not empty and uses a supported format (Markdown, TXT, HTML, PDF).</p>
+
+<h3>E3002 — Index Out of Sync</h3>
+<p>The BM25 index and ChromaDB vector store contain a different number of chunks. HTTP status: 500.</p>
+<p><strong>Resolution:</strong> Delete data/index/ and re-run seed_index.py to rebuild both indexes.</p>
+
+<h3>E3003 — Duplicate Document</h3>
+<p>The submitted document is a near-duplicate (cosine similarity above DEDUP_THRESHOLD) of an already-indexed chunk. The document is skipped. HTTP status: 200 (not an error, logged as a warning).</p>
+<p><strong>Resolution:</strong> No action required. If you intentionally want to re-index modified content, delete the existing index and re-run ingestion.</p>
+
+<h2>Generation Errors (E4xxx)</h2>
+
+<h3>E4001 — LLM Timeout</h3>
+<p>The language model did not respond within OLLAMA_TIMEOUT seconds. HTTP status: 504.</p>
+<p><strong>Resolution:</strong> Increase OLLAMA_TIMEOUT in .env or switch to a faster model.</p>
+
+<h3>E4002 — Insufficient Context</h3>
+<p>Retrieval confidence is below INSUFFICIENT_CONFIDENCE_THRESHOLD. A structured "I don't know" response is returned rather than a hallucinated answer. HTTP status: 200.</p>
+<p><strong>Resolution:</strong> Rephrase the question or ensure the relevant documents are indexed.</p>
+</body>
+</html>

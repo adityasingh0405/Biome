@@ -1,0 +1,31 @@
+Biome RAG — Evaluation Methodology
+
+This document describes the methodology used to evaluate the Biome RAG system.
+
+Evaluation Dataset
+
+The evaluation set contains 50 questions drawn from the seeded corpus of 10 internal documents. Questions cover four categories: simple lookups (20 questions), multi-hop questions requiring information from two or more documents (15 questions), unanswerable questions with no supporting content in the corpus (10 questions), and ambiguous questions where multiple answers are plausible (5 questions).
+
+Golden answers were written manually by referencing the source documents. Each question also records expected_chunk_ids listing the document sections that should be retrieved.
+
+Metrics
+
+Answer Correctness: Computed as the F1 overlap between predicted and golden answer token sets. A score of 1.0 means the predicted answer contains all golden tokens. A score of 0.0 means no overlap. This is a recall-biased metric; longer answers score higher. LLM-as-judge is used as an optional higher-quality alternative when an API key is available.
+
+Faithfulness: Measures whether the predicted answer tokens are grounded in the retrieved context. Computed as the fraction of predicted answer tokens that appear in the retrieved chunk text. A score of 1.0 means every word in the answer appeared in the context.
+
+Retrieval Relevance: Precision at the retrieved set. Computed as the fraction of expected_chunk_ids that appear in the retrieved chunk identifiers. A score of 1.0 means all expected chunks were retrieved.
+
+Citation Accuracy: The fraction of citations that are verified as supporting the claim they are attached to. Verification uses a rule-based judge (keyword overlap with negation detection) by default, or an LLM judge when an API key is available.
+
+Chunking Strategy Comparison
+
+The full evaluation suite is run three times, once restricting ingestion to each chunking strategy (fixed, structure-aware, semantic). This produces per-strategy metric tables showing which strategy produces the best retrieval relevance, faithfulness, and citation accuracy on this corpus.
+
+Hybrid vs Dense-Only Comparison
+
+The retrieval_relevance metric is computed separately for hybrid mode and dense-only mode to demonstrate the advantage of BM25 augmentation, particularly on exact-term queries such as error codes and configuration key names.
+
+Reproducibility
+
+All evaluation results are written to eval/reports/ as JSON and Markdown. The golden dataset is static; results are reproducible given the same model and index.

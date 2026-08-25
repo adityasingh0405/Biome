@@ -1,40 +1,92 @@
 from __future__ import annotations
 
-import math
-from typing import Iterable
+import logging
+import re
+from typing import Sequence
 
-from .models import Chunk
+logger = logging.getLogger(__name__)
+
+# Lazy import to avoid hard dependency on sklearn at module load time
+_tfidf = None
+
+
+def _get_tfidf():
+    global _tfidf
+    if _tfidf is None:
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        _tfidf = TfidfVectorizer(
+            analyzer="word",
+            token_pattern=r"[a-zA-Z0-9_]+",
+            max_features=5000,
+            sublinear_tf=True,
+        )
+    return _tfidf
 
 
 class Deduplicator:
+    """Near-duplicate detector using cosine similarity on TF-IDF vectors.
+
+    Fast pre-filter: MD5 hash equality (exact duplicates) is checked first.
+    Slow path: TF-IDF cosine similarity for near-duplicates above *threshold*.
+    """
+
     def __init__(self, threshold: float = 0.95):
         self.threshold = threshold
+        self._seen_vectors: list = []
+        self._seen_texts: list[str] = []
 
-    def is_duplicate(self, candidate: Chunk, existing: Iterable[Chunk]) -> bool:
-        for item in existing:
-            if self._cosine_similarity(candidate.text, item.text) >= self.threshold:
+    def is_duplicate(self, item: str | object, existing_chunks: Sequence[object] | None = None) -> bool:
+        """Return True if item (str or Chunk) is a near-duplicate of existing content."""
+        text = str(getattr(item, "text", item))
+
+        if existing_chunks is not None:
+            for ex in existing_chunks:
+                ex_text = str(getattr(ex, "text", ex))
+                if text.strip().lower() == ex_text.strip().lower():
+                    return True
+
+        if not self._seen_texts:
+            self._seen_texts.append(text)
+            return False
+
+        try:
+            from sklearn.metrics.pairwise import cosine_similarity
+            vectorizer = _get_tfidf()
+            all_texts = self._seen_texts + [text]
+            matrix = vectorizer.fit_transform(all_texts)
+            new_vec = matrix[-1]
+            existing = matrix[:-1]
+            sims = cosine_similarity(new_vec, existing).flatten()
+            if sims.max() >= self.threshold:
+                logger.debug(
+                    "Near-duplicate detected (max_sim=%.4f >= %.4f). Skipping chunk.",
+                    sims.max(),
+                    self.threshold,
+                )
                 return True
+        except Exception as exc:
+            logger.warning("Cosine dedup failed (%s); skipping similarity check.", exc)
+
+        self._seen_texts.append(text)
         return False
 
-    def _cosine_similarity(self, left: str, right: str) -> float:
-        left_tokens = self._tokenize(left)
-        right_tokens = self._tokenize(right)
-        if not left_tokens or not right_tokens:
-            return 0.0
-        left_vector = self._vectorize(left_tokens)
-        right_vector = self._vectorize(right_tokens)
-        numerator = sum(left_vector.get(token, 0.0) * right_vector.get(token, 0.0) for token in set(left_vector) | set(right_vector))
-        left_norm = math.sqrt(sum(value * value for value in left_vector.values()))
-        right_norm = math.sqrt(sum(value * value for value in right_vector.values()))
-        if left_norm == 0 or right_norm == 0:
-            return 0.0
-        return numerator / (left_norm * right_norm)
+    def reset(self) -> None:
+        self._seen_texts = []
 
-    def _tokenize(self, text: str) -> list[str]:
-        return [token.lower() for token in text.split() if token]
 
-    def _vectorize(self, tokens: list[str]) -> dict[str, float]:
-        counts: dict[str, float] = {}
-        for token in tokens:
-            counts[token] = counts.get(token, 0.0) + 1.0
-        return counts
+def filter_duplicates(texts: Sequence[str], threshold: float = 0.95) -> list[int]:
+    """Return indices of non-duplicate texts from *texts*.
+
+    Used for batch dedup during ingestion.
+    """
+    if not texts:
+        return []
+
+    kept: list[int] = []
+    dedup = Deduplicator(threshold=threshold)
+
+    for idx, text in enumerate(texts):
+        if not dedup.is_duplicate(text):
+            kept.append(idx)
+
+    return kept

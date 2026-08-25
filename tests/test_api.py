@@ -29,3 +29,18 @@ def test_api_endpoints_return_expected_shapes(tmp_path: Path):
 
     documents_response = client.get("/v1/documents")
     assert documents_response.status_code == 200
+
+
+def test_backend_metadata_and_health_endpoints(tmp_path: Path):
+    app = create_app(raw_dir=tmp_path / "raw", processed_dir=tmp_path / "processed", storage_dir=tmp_path / "index")
+    client = TestClient(app)
+
+    health_response = client.get("/health")
+    assert health_response.status_code == 200
+    assert health_response.json()["status"] == "ok"
+
+    root_response = client.get("/")
+    assert root_response.status_code == 200
+    body = root_response.json()
+    assert body["service"] == "Biome RAG"
+    assert "ask" in body["endpoints"]

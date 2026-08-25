@@ -15,7 +15,7 @@ def test_answer_builder_returns_insufficient_context_when_confidence_is_low(tmp_
             dense_score=0.1,
             sparse_score=0.1,
             fused_score=0.1,
-            rerank_score=0.1,
+            rerank_score=-0.5,
         )
     ]
 
@@ -23,4 +23,24 @@ def test_answer_builder_returns_insufficient_context_when_confidence_is_low(tmp_
 
     assert response.answer.startswith("I don't know")
     assert response.confidence.retrieval_confidence < 0.5
+    assert response.citations[0].verified is False
+
+
+def test_answer_builder_flags_an_unsupported_citation():
+    builder = AnswerBuilder(confidence_threshold=0.1)
+    chunks = [
+        RankedChunk(
+            text="The deployment guide mentions the package version but not the password.",
+            source="deploy.md",
+            section_heading="Deployment",
+            page_number=None,
+            dense_score=0.2,
+            sparse_score=0.2,
+            fused_score=0.2,
+            rerank_score=0.2,
+        )
+    ]
+
+    response = builder.answer("What is the password?", chunks)
+
     assert response.citations[0].verified is False

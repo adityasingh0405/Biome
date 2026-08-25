@@ -1,0 +1,38 @@
+Biome RAG Changelog
+
+Version 0.3.0 — 2026-08-01
+
+New features:
+- Hybrid retrieval combining BM25 sparse search and ChromaDB dense vector search
+- Reciprocal Rank Fusion (RRF) for combining ranked lists from both retrieval paths
+- Cross-encoder reranker using ms-marco-MiniLM-L-6-v2 for final result scoring
+- Three chunking strategies: fixed-size, structure-aware, and semantic
+- Near-duplicate detection with configurable cosine similarity threshold
+- Confidence scoring: retrieval confidence, citation coverage, completeness, composite
+- Streamlit dashboard with hybrid vs dense-only comparison toggle
+- Docker Compose setup for one-command deployment
+
+Bug fixes:
+- Fixed BM25 index not persisting correctly when storage directory is missing
+- Fixed ChromaDB collection name collision when running multiple environments
+- Fixed citation parser not handling consecutive [n] markers correctly
+
+Version 0.2.0 — 2026-07-01
+
+New features:
+- FastAPI backend with /v1/ask, /v1/documents, /v1/ingest, and /health endpoints
+- BM25 sparse index with custom implementation (no external dependency)
+- Basic citation extraction and rule-based verification
+- PDF support via pypdf
+
+Bug fixes:
+- Fixed HTML loader stripping content inside code blocks
+- Fixed PDF page number extraction for numbered filenames
+
+Version 0.1.0 — 2026-06-01
+
+Initial release:
+- Basic ingestion pipeline with Markdown and text support
+- Fixed-size chunking
+- Simple keyword search (no vector store)
+- Command-line interface for ingestion
