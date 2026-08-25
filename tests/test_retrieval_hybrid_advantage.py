@@ -48,6 +48,7 @@ def test_hybrid_retrieval_outperforms_dense_only_on_exact_term_query(tmp_path: P
             sparse_score=0.0,
             fused_score=getattr(c, "fused_score", 0.0),
             rerank_score=1.0,
+            chunk_index=getattr(c, "chunk_index", 0),
         )
         for c in chunks
     ]

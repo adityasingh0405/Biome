@@ -55,6 +55,7 @@ class Reranker:
                             sparse_score=0.0,
                             fused_score=0.0,
                             rerank_score=float(score),
+                            chunk_index=getattr(chunk, "chunk_index", 0),
                         )
                     )
                 ranked.sort(key=lambda item: item.rerank_score, reverse=True)
@@ -79,6 +80,7 @@ class Reranker:
                     sparse_score=0.0,
                     fused_score=0.0,
                     rerank_score=score,
+                    chunk_index=getattr(chunk, "chunk_index", 0),
                 )
             )
         ranked.sort(key=lambda item: item.rerank_score, reverse=True)
@@ -165,12 +167,15 @@ class HybridRetriever:
                 sparse_weight=self.rrf_sparse_weight,
             )
 
-        fused_ids = {item[0] for item in fused[: self.settings.dense_top_k * 2]}
         fused_score_map: dict[str, float] = {item[0]: item[1] for item in fused}
-        logger.debug("Reciprocal Rank Fusion (RRF) generated %d unique candidate IDs.", len(fused_ids))
-
-        # --- Candidate selection & reranking ---
-        candidate_chunks = [chunk for chunk in chunks if self._to_identifier(chunk) in fused_ids]
+        fused_items = fused[: self.settings.dense_top_k * 2]
+        chunk_by_id = {self._to_identifier(chunk): chunk for chunk in chunks}
+        candidate_chunks: list[Any] = []
+        for identifier, fused_score in fused_items:
+            if identifier in chunk_by_id:
+                chunk = chunk_by_id[identifier]
+                setattr(chunk, "fused_score", fused_score)
+                candidate_chunks.append(chunk)
         logger.debug("Selected %d candidate chunks for reranking.", len(candidate_chunks))
         reranked = self.reranker.rerank(query, candidate_chunks)
 
@@ -188,6 +193,7 @@ class HybridRetriever:
                     sparse_score=sparse_scores.get(identifier, 0.0),
                     fused_score=fused_score_map.get(identifier, 0.0),
                     rerank_score=chunk.rerank_score,
+                    chunk_index=getattr(chunk, "chunk_index", 0),
                 )
             )
             logger.debug(

@@ -14,4 +14,5 @@ class RankedChunk:
     sparse_score: float
     fused_score: float
     rerank_score: float
+    chunk_index: int = 0
     metadata: dict[str, Any] = field(default_factory=dict)
