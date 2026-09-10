@@ -11,17 +11,33 @@ from ..config import get_runtime_settings
 from .bm25 import BM25Index
 from .dense import ChromaDenseEmbeddingAdapter, DenseEmbeddingAdapter, SimpleDenseEmbeddingAdapter
 from .models import RankedChunk
+from .qdrant_store import QdrantAdapter
 from .stores import ChunkStore
 
 logger = logging.getLogger(__name__)
 
 
-def reciprocal_rank_fusion(dense_ranks: list[str], sparse_ranks: list[str], dense_weight: float = 0.7, sparse_weight: float = 0.3) -> list[tuple[str, float]]:
+def reciprocal_rank_fusion(
+    dense_ranks: list[str],
+    sparse_ranks: list[str],
+    dense_weight: float = 0.7,
+    sparse_weight: float = 0.3,
+    k: int = 60,
+) -> list[tuple[str, float]]:
+    """Standard Reciprocal Rank Fusion (Cormack et al., 2009).
+
+    Formula: score(d) = sum_over_lists( w * 1 / (k + rank(d)) )
+    where k=60 is the canonical smoothing constant that prevents rank-1 from
+    dominating and makes scores more robust to small rank changes.
+
+    BUG-005 fix: the previous implementation used `w * (1/rank)` with no k constant,
+    which is a non-standard variant that produces unnormalized, rank-1-dominated scores.
+    """
     scores: dict[str, float] = {}
     for rank, item in enumerate(dense_ranks, start=1):
-        scores[item] = scores.get(item, 0.0) + dense_weight * (1.0 / rank)
+        scores[item] = scores.get(item, 0.0) + dense_weight * (1.0 / (k + rank))
     for rank, item in enumerate(sparse_ranks, start=1):
-        scores[item] = scores.get(item, 0.0) + sparse_weight * (1.0 / rank)
+        scores[item] = scores.get(item, 0.0) + sparse_weight * (1.0 / (k + rank))
     return sorted(scores.items(), key=lambda item: item[1], reverse=True)
 
 
@@ -111,23 +127,66 @@ class HybridRetriever:
         )
 
     def _build_dense_adapter(self) -> DenseEmbeddingAdapter:
+        """Build the best available dense adapter.
+
+        Priority: QdrantAdapter (bge-m3, native hybrid)
+               → ChromaDenseEmbeddingAdapter (sentence-transformers, local)
+               → SimpleDenseEmbeddingAdapter (token-overlap fallback)
+        """
+        # 1. Try Qdrant + BGE-M3
         try:
-            adapter = ChromaDenseEmbeddingAdapter(self.storage_dir, self.settings.embedding_collection_name)
-            logger.info("ChromaDenseEmbeddingAdapter successfully initialized for retrieval.")
+            adapter = QdrantAdapter()
+            client = adapter._get_client()
+            if client is not None:
+                logger.info("Dense adapter: QdrantAdapter (BGE-M3 hybrid).")
+                return adapter
+        except Exception as e:
+            logger.debug("QdrantAdapter not available: %s", e)
+
+        # 2. Try ChromaDB
+        try:
+            adapter = ChromaDenseEmbeddingAdapter(
+                self.storage_dir, self.settings.embedding_collection_name
+            )
+            logger.info("Dense adapter: ChromaDenseEmbeddingAdapter (sentence-transformers).")
             return adapter
         except Exception as e:
-            logger.warning("Failed to initialize ChromaDenseEmbeddingAdapter: %s. Falling back to SimpleDenseEmbeddingAdapter.", e)
-            return SimpleDenseEmbeddingAdapter()
+            logger.warning(
+                "ChromaDenseEmbeddingAdapter unavailable: %s. "
+                "Falling back to SimpleDenseEmbeddingAdapter.", e
+            )
 
-    def retrieve(self, query: str, top_k: int = 5, retrieval_mode: str = "hybrid") -> list[RankedChunk]:
-        logger.info("Starting retrieval for query: '%s', mode: %s, top_k: %d", query, retrieval_mode, top_k)
+        # 3. Token-overlap fallback (always available)
+        logger.warning("Dense adapter: SimpleDenseEmbeddingAdapter (token overlap only).")
+        return SimpleDenseEmbeddingAdapter()
+
+    def retrieve(
+        self,
+        query: str,
+        top_k: int = 5,
+        retrieval_mode: str = "hybrid",
+        access_scope: list[str] | None = None,
+        rerank: bool = True,
+    ) -> list[RankedChunk]:
+        logger.info(
+            "Starting retrieval: query='%s', mode=%s, top_k=%d, access_scope=%s, rerank=%s",
+            query, retrieval_mode, top_k, access_scope, rerank,
+        )
         chunks = self.chunk_store.get_chunks()
         if not chunks:
             logger.warning("No chunks available in ChunkStore. Retrieval returning empty list.")
             return []
 
-        # --- Dense results ---
-        dense_search_results = self.dense_adapter.search(query, chunks, top_k=self.settings.dense_top_k)
+        # --- Dense results (QdrantAdapter uses access_scope for payload filtering) ---
+        try:
+            dense_search_results = self.dense_adapter.search(
+                query, chunks, top_k=self.settings.dense_top_k, access_scope=access_scope
+            )
+        except TypeError:
+            # Fallback adapters (ChromaDB, Simple) don't accept access_scope kwarg
+            dense_search_results = self.dense_adapter.search(
+                query, chunks, top_k=self.settings.dense_top_k
+            )
         dense_scores: dict[str, float] = {
             self._to_identifier(chunk): score for chunk, score in dense_search_results
         }
@@ -168,7 +227,7 @@ class HybridRetriever:
             )
 
         fused_score_map: dict[str, float] = {item[0]: item[1] for item in fused}
-        fused_items = fused[: self.settings.dense_top_k * 2]
+        fused_items = fused[: min(20, len(fused))]
         chunk_by_id = {self._to_identifier(chunk): chunk for chunk in chunks}
         candidate_chunks: list[Any] = []
         for identifier, fused_score in fused_items:
@@ -177,9 +236,15 @@ class HybridRetriever:
                 setattr(chunk, "fused_score", fused_score)
                 candidate_chunks.append(chunk)
         logger.debug("Selected %d candidate chunks for reranking.", len(candidate_chunks))
-        reranked = self.reranker.rerank(query, candidate_chunks)
+        if rerank:
+            reranked = self.reranker.rerank(query, candidate_chunks)
+        else:
+            for c in candidate_chunks:
+                setattr(c, "rerank_score", getattr(c, "fused_score", 0.0))
+            reranked = candidate_chunks
 
         # --- Build final ranked list ---
+
         ranked: list[RankedChunk] = []
         for chunk in reranked[:top_k]:
             identifier = self._to_identifier(chunk)

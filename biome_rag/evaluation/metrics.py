@@ -87,3 +87,33 @@ def precision_at_k(retrieved_ids: Iterable[str], golden_ids: Iterable[str], k: i
         return 0.0
     relevant = sum(1 for r in retrieved if r in golden)
     return round(relevant / len(retrieved), 3)
+
+
+def mean_reciprocal_rank(retrieved_ids: Iterable[str], golden_ids: Iterable[str]) -> float:
+    """Mean Reciprocal Rank (MRR): 1 / rank of the first relevant document.
+
+    Returns 0.0 if no relevant document appears in the retrieved list.
+    Supports both exact ID matching and document-filename fallback.
+
+    Note: For a single query this is simply the Reciprocal Rank (RR).
+    Average multiple calls externally to obtain the true MRR across a dataset.
+    """
+    retrieved_list = list(retrieved_ids)
+    golden_list = list(golden_ids)
+    if not retrieved_list or not golden_list:
+        return 0.0
+
+    golden_set = set(golden_list)
+
+    # Try exact ID match first
+    for rank, doc_id in enumerate(retrieved_list, start=1):
+        if doc_id in golden_set:
+            return round(1.0 / rank, 3)
+
+    # Fallback: filename-level match
+    golden_docs = {_doc_name(g) for g in golden_list}
+    for rank, doc_id in enumerate(retrieved_list, start=1):
+        if _doc_name(doc_id) in golden_docs:
+            return round(1.0 / rank, 3)
+
+    return 0.0

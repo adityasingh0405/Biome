@@ -1,0 +1,19 @@
+{
+  "arm_id": "dense_k10_no_rerank",
+  "retrieval_mode": "dense",
+  "top_k": 10,
+  "rerank": false,
+  "chunk_strategy": "default",
+  "correctness": 0.2055,
+  "faithfulness": 0.7341,
+  "context_precision": 0.8106,
+  "context_recall": 0.4531,
+  "hallucination_score": 0.3099,
+  "answer_relevancy": 0.4083,
+  "semantic_similarity": 0.5229,
+  "mrr": 0.4657,
+  "latency_ms": 20020.303800003603,
+  "n_questions": 55,
+  "error": "",
+  "composite_score": 0.453
+}

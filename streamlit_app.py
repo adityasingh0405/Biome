@@ -1,11 +1,12 @@
-"""Biome RAG — Streamlit Dashboard
+"""Biome RAG — Production Hybrid RAG Dashboard
 
 A rich UI for the Biome RAG pipeline featuring:
-- Question answering with [n] citation highlighting
-- Confidence breakdown bar chart
-- Retrieved chunks ranked by score
-- Hybrid vs dense-only comparison panel
-- Document index browser
+- Question answering with [n] verified citation highlighting
+- Multi-Source Document Ingestion (Files upload, local directory crawler, raw text)
+- Confidence breakdown (Retrieval, Citation coverage, Completeness, Composite)
+- Retrieved chunks ranked by dense, sparse, RRF, and Cross-Encoder score
+- Hybrid vs dense-only side-by-side comparison panel
+- Knowledge base & corpus browser
 """
 from __future__ import annotations
 
@@ -34,7 +35,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
-# Custom CSS — premium dark design
+# Custom CSS — premium dark glassmorphism design
 # ---------------------------------------------------------------------------
 
 st.markdown(
@@ -48,13 +49,13 @@ st.markdown(
 
     /* Dark gradient background */
     .stApp {
-        background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+        background: linear-gradient(135deg, #090a16 0%, #12132b 50%, #0d1b38 100%);
         color: #e2e8f0;
     }
 
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background: rgba(15, 15, 30, 0.95);
+        background: rgba(10, 11, 26, 0.95);
         border-right: 1px solid rgba(99, 102, 241, 0.2);
     }
 
@@ -170,21 +171,13 @@ st.markdown(
         letter-spacing: 0.05em;
     }
 
-    /* Stbutton overrides */
-    .stButton > button {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: opacity 0.2s;
-    }
-    .stButton > button:hover { opacity: 0.85; }
-
-    /* Expander */
-    .streamlit-expanderHeader {
-        background: rgba(30, 27, 75, 0.4) !important;
-        border-radius: 6px !important;
+    /* Ingest card */
+    .ingest-box {
+        background: rgba(30, 27, 75, 0.4);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
     }
     </style>
     """,
@@ -192,7 +185,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------------------------
-# Helpers
+# API Helpers
 # ---------------------------------------------------------------------------
 
 
@@ -238,12 +231,49 @@ def api_health() -> dict:
         return {}
 
 
+def api_upload_files(files) -> dict | None:
+    try:
+        file_tuples = [("files", (f.name, f.getvalue(), f.type or "application/octet-stream")) for f in files]
+        resp = requests.post(f"{API_BASE}/v1/ingest/upload", files=file_tuples, timeout=180)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as exc:
+        st.error(f"❌ Upload failed: {exc}")
+        return None
+
+
+def api_ingest_directory(dir_path: str, recursive: bool = True) -> dict | None:
+    try:
+        resp = requests.post(
+            f"{API_BASE}/v1/ingest/directory",
+            json={"directory_path": dir_path, "recursive": recursive},
+            timeout=300,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as exc:
+        st.error(f"❌ Directory ingestion failed: {exc}")
+        return None
+
+
+def api_ingest_text(title: str, content: str) -> dict | None:
+    try:
+        resp = requests.post(
+            f"{API_BASE}/v1/ingest/text",
+            json={"title": title, "content": content},
+            timeout=60,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as exc:
+        st.error(f"❌ Text ingestion failed: {exc}")
+        return None
+
+
 def highlight_citations(text: str, citations: list[dict]) -> str:
-    """Replace [n] in answer text with styled HTML citation badges."""
-    # Build a map from chunk_index → verified
     verified_map: dict[int, bool] = {}
     for c in citations:
-        idx = c.get("chunk_index", -1) + 1  # [n] is 1-indexed in the text
+        idx = c.get("chunk_index", -1) + 1
         verified_map[idx] = c.get("verified", False)
 
     def replacer(match: re.Match) -> str:
@@ -257,7 +287,6 @@ def highlight_citations(text: str, citations: list[dict]) -> str:
 
 
 def render_confidence(conf: dict) -> None:
-    """Render the four confidence dimensions as metric cards + a progress bar."""
     rc = conf.get("retrieval_confidence", 0.0)
     cc = conf.get("citation_coverage", 0.0)
     cm = conf.get("completeness", 0.0)
@@ -303,7 +332,7 @@ def render_chunks(chunks: list[dict], label: str = "Retrieved Chunks") -> None:
             col1, col2 = st.columns([3, 1])
             with col1:
                 st.markdown(
-                    f'<div class="chunk-card"><div class="chunk-source">{source}</div>{chunk.get("text", "")[:500]}{"..." if len(chunk.get("text", "")) > 500 else ""}</div>',
+                    f'<div class="chunk-card"><div class="chunk-source">{source}</div>{chunk.get("text", "")[:600]}{"..." if len(chunk.get("text", "")) > 600 else ""}</div>',
                     unsafe_allow_html=True,
                 )
             with col2:
@@ -355,10 +384,10 @@ with st.sidebar:
     health = api_health()
     chunks_indexed = health.get("chunks_indexed", "?")
     status_icon = "🟢" if health.get("status") == "ok" else "🔴"
-    st.markdown(f"{status_icon} **API** — {chunks_indexed} chunks indexed")
+    st.markdown(f"{status_icon} **Knowledge Base** — **{chunks_indexed}** chunks indexed")
 
     st.markdown("---")
-    st.markdown("### Settings")
+    st.markdown("### Search Settings")
     compare_mode = st.toggle("Hybrid vs Dense comparison", value=False)
     retrieval_mode = "hybrid"
     if not compare_mode:
@@ -370,55 +399,55 @@ with st.sidebar:
         )
 
     st.markdown("---")
-    st.caption(f"API: `{API_BASE}`")
-    st.caption("LLM: `local` | Embeddings: `sentence-transformers`")
+    st.caption(f"Backend: `{API_BASE}`")
+    st.caption("Cross-Encoder: `ms-marco-MiniLM-L-6-v2`")
+    st.caption("Dense Index: `ChromaDB` | Sparse: `BM25`")
+
 
 # ---------------------------------------------------------------------------
-# Main layout
+# Main Application Tabs
 # ---------------------------------------------------------------------------
 
-st.markdown("# 🌿 Biome RAG")
-st.markdown("*Hybrid search · Grounded answers · Verified citations*")
+st.markdown("# 🌿 Biome Production RAG")
+st.markdown("*Multi-Source Ingestion · Hybrid Search (BM25 + Dense + RRF) · Verified Inline Citations*")
 st.markdown("---")
 
-tab_ask, tab_docs = st.tabs(["💬 Ask", "📂 Documents"])
+tab_ask, tab_ingest, tab_docs = st.tabs(["💬 Ask & Retrieve", "📥 Ingest Sources", "📂 Corpus Browser"])
 
 # ---------------------------------------------------------------------------
-# Ask tab
+# Tab 1: Ask & Retrieve
 # ---------------------------------------------------------------------------
 
 with tab_ask:
     question = st.text_input(
-        "Ask a question about your documentation",
-        placeholder="e.g. How do I authenticate with the Biome API?",
+        "Ask any question about your indexed documentation",
+        placeholder="e.g. How do I authenticate with the API? What are the deployment error codes?",
         key="question_input",
     )
 
     col_ask, col_clear = st.columns([1, 5])
     with col_ask:
-        ask_clicked = st.button("Ask", use_container_width=True)
+        ask_clicked = st.button("Ask Question", use_container_width=True)
 
     if ask_clicked and question.strip():
         if compare_mode:
-            # --- Compare mode: side-by-side hybrid vs dense ---
-            with st.spinner("Running hybrid and dense-only retrieval …"):
+            with st.spinner("Running side-by-side hybrid and dense retrieval …"):
                 compare_result = api_compare(question)
 
             if compare_result:
-                st.markdown("## Side-by-Side Comparison")
+                st.markdown("## ⚖️ Side-by-Side Comparison")
                 col_h, col_d = st.columns(2)
 
                 with col_h:
-                    st.markdown('<div class="compare-header hybrid-header">⚡ Hybrid (BM25 + Dense + RRF)</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="compare-header hybrid-header">⚡ Hybrid (BM25 + Dense + RRF + Cross-Encoder)</div>', unsafe_allow_html=True)
                     render_result(compare_result.get("hybrid", {}))
 
                 with col_d:
-                    st.markdown('<div class="compare-header dense-header">📐 Dense Only</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="compare-header dense-header">📐 Dense Only (Embeddings only)</div>', unsafe_allow_html=True)
                     render_result(compare_result.get("dense", {}))
 
         else:
-            # --- Single mode ---
-            with st.spinner(f"Searching ({retrieval_mode} mode) …"):
+            with st.spinner(f"Retrieving and generating ({retrieval_mode} mode) …"):
                 result = api_ask(question, retrieval_mode)
 
             if result:
@@ -428,36 +457,110 @@ with tab_ask:
     elif ask_clicked:
         st.warning("Please enter a question.")
 
-    # Hint examples
     if not ask_clicked:
-        st.markdown("#### Try these questions:")
+        st.markdown("#### Sample Questions:")
         examples = [
             "How do I authenticate with the Biome API?",
-            "What error code is returned for invalid credentials?",
-            "Why is hybrid retrieval better than dense-only search?",
-            "What is the BIOME_API_KEY?",
+            "What error code indicates invalid credentials?",
+            "What is the deployment target error code?",
+            "What are the environment variable requirements?",
         ]
         for ex in examples:
             if st.button(ex, key=f"ex_{ex[:20]}"):
                 st.session_state.question_input = ex
                 st.rerun()
 
+
 # ---------------------------------------------------------------------------
-# Documents tab
+# Tab 2: Ingest Sources (Multi-Source Collection)
+# ---------------------------------------------------------------------------
+
+with tab_ingest:
+    st.markdown("## 📥 Ingest Documentation From Multiple Sources")
+    st.markdown("Collect and index documents across your system into both the Chroma vector store and BM25 index.")
+
+    ingest_type = st.radio(
+        "Select ingestion source",
+        ["📁 Upload Document Files", "💻 Crawl Local System Directory", "📝 Ingest Raw Text / Markdown"],
+        horizontal=True,
+    )
+
+    if ingest_type == "📁 Upload Document Files":
+        st.markdown('<div class="ingest-box">', unsafe_allow_html=True)
+        st.markdown("### Upload Documents")
+        st.markdown("Supported: **PDF, Markdown (.md), Plain Text (.txt, .log), HTML, JSON, CSV, and Code files (.py, .js, .ts, .yaml, .sql)**")
+        uploaded_files = st.file_uploader(
+            "Choose files to ingest",
+            accept_multiple_files=True,
+            type=["pdf", "md", "markdown", "txt", "log", "rst", "html", "htm", "json", "csv", "tsv", "py", "js", "ts", "yaml", "yml", "sql"],
+        )
+        if st.button("🚀 Ingest Uploaded Files", use_container_width=True):
+            if uploaded_files:
+                with st.spinner(f"Chunking, deduplicating, and indexing {len(uploaded_files)} files..."):
+                    res = api_upload_files(uploaded_files)
+                if res and res.get("status") == "ok":
+                    st.success(f"✅ Ingested {len(res.get('files_uploaded', []))} files! Total active chunks: {res.get('total_chunks')} (Skipped {res.get('duplicates_skipped', 0)} near-duplicates).")
+                    st.rerun()
+            else:
+                st.warning("Please select at least one file to upload.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    elif ingest_type == "💻 Crawl Local System Directory":
+        st.markdown('<div class="ingest-box">', unsafe_allow_html=True)
+        st.markdown("### Crawl Local Folder on System")
+        st.markdown("Enter any folder path on your machine. Biome will discover all documents, chunk them with multi-strategy chunkers, and synchronize dense and sparse indexes.")
+        dir_input = st.text_input("Local Directory Path", placeholder="e.g. C:\\Users\\Aditya Singh\\Documents\\CompanyDocs or /data/docs")
+        recursive_check = st.checkbox("Include subdirectories (recursive crawl)", value=True)
+        if st.button("🚀 Scan & Ingest Directory", use_container_width=True):
+            if dir_input.strip():
+                with st.spinner(f"Scanning and indexing '{dir_input}'..."):
+                    res = api_ingest_directory(dir_input.strip(), recursive=recursive_check)
+                if res and res.get("status") == "ok":
+                    st.success(f"✅ Indexed {res.get('files_found')} files from '{dir_input}'! Total chunks: {res.get('total_chunks')}.")
+                    st.rerun()
+            else:
+                st.warning("Please provide a directory path.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    elif ingest_type == "📝 Ingest Raw Text / Markdown":
+        st.markdown('<div class="ingest-box">', unsafe_allow_html=True)
+        st.markdown("### Ingest Raw Documentation Snippet")
+        doc_title = st.text_input("Document Title / Source Label", placeholder="e.g. quarterly_architecture_notes")
+        doc_body = st.text_area("Document Content (Markdown or Plain Text)", height=250, placeholder="Paste policy, wiki, or release notes here...")
+        if st.button("🚀 Ingest Text", use_container_width=True):
+            if doc_title.strip() and doc_body.strip():
+                with st.spinner("Ingesting document..."):
+                    res = api_ingest_text(doc_title, doc_body)
+                if res and res.get("status") == "ok":
+                    st.success(f"✅ Ingested document '{res.get('document')}'! Total chunks: {res.get('total_chunks')}.")
+                    st.rerun()
+            else:
+                st.warning("Please provide both a title and content.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ---------------------------------------------------------------------------
+# Tab 3: Corpus Browser
 # ---------------------------------------------------------------------------
 
 with tab_docs:
-    st.markdown("## 📂 Indexed Documents")
+    st.markdown("## 📂 Indexed Knowledge Base Documents")
     docs = api_documents()
     if docs:
-        st.markdown(f"**{len(docs)} documents** indexed across the knowledge base.")
+        st.markdown(f"**{len(docs)} documents** currently indexed across the knowledge base.")
+        col_search, _ = st.columns([2, 2])
+        with col_search:
+            search_doc = st.text_input("Filter documents by name", placeholder="Filter...")
+        
         for doc in docs:
             source = doc.get("source", "unknown").split("\\")[-1].split("/")[-1]
+            if search_doc and search_doc.lower() not in source.lower():
+                continue
             count = doc.get("chunk_count", "?")
             st.markdown(
                 f'<div class="chunk-card"><div class="chunk-source">📄 {source}</div>'
-                f'<span class="score-pill">{count} chunks</span></div>',
+                f'<span class="score-pill">{count} chunks</span> <span style="font-size:0.8em; color:#94a3b8;">Path: {doc.get("source")}</span></div>',
                 unsafe_allow_html=True,
             )
     else:
-        st.info("No documents indexed yet. Run `python scripts/seed_index.py` to index the sample corpus.")
+        st.info("No documents indexed yet. Use the 'Ingest Sources' tab to add documents.")

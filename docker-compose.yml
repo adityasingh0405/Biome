@@ -1,35 +1,136 @@
-version: "3.9"
+# ============================================================
+# Biome RAG — Full Service Stack
+# Phase 0: infrastructure services are defined here.
+# Run: docker compose up -d qdrant redis ollama
+# (Do NOT run 'docker compose up' blindly on first use —
+#  confirm port availability and resource limits first.)
+# ============================================================
 
 services:
-  # ------------------------------------------------------------------
-  # One-shot seed service: indexes the sample corpus on first startup
-  # ------------------------------------------------------------------
-  seed:
-    build: .
-    working_dir: /app
-    command: python scripts/seed_index.py
-    volumes:
-      - ./data:/app/data
-    env_file:
-      - .env
-    restart: "no"
 
-  # ------------------------------------------------------------------
-  # FastAPI backend
-  # ------------------------------------------------------------------
+  # ----------------------------------------------------------
+  # Qdrant — vector database (Phase 3+)
+  # Dashboard: http://localhost:6333/dashboard
+  # ----------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:v1.10.1
+    container_name: biome-qdrant
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "6334:6334"   # gRPC port
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__API_KEY: "${QDRANT_API_KEY:-}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:6333/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # Redis — session memory / chat history (Phase 5+)
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: biome-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # Ollama — local LLM server (Phase 0+)
+  # Pull model after first start: docker exec biome-ollama ollama pull llama3.1:8b
+  # ----------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: biome-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # Langfuse PostgreSQL — internal DB for Langfuse (Phase 5+)
+  # Do NOT expose this port externally.
+  # ----------------------------------------------------------
+  langfuse-db:
+    image: postgres:16-alpine
+    container_name: biome-langfuse-db
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: "${LANGFUSE_DB_PASSWORD:?LANGFUSE_DB_PASSWORD must be set}"
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # Langfuse — observability & tracing (Phase 5+)
+  # Dashboard: http://localhost:3000
+  # ----------------------------------------------------------
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: biome-langfuse
+    depends_on:
+      langfuse-db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://langfuse:${LANGFUSE_DB_PASSWORD:?LANGFUSE_DB_PASSWORD must be set}@langfuse-db:5432/langfuse"
+      NEXTAUTH_SECRET: "${LANGFUSE_NEXTAUTH_SECRET:-biome-langfuse-nextauth-secret-change-me}"
+      NEXTAUTH_URL: "http://localhost:3000"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "true"
+      SALT: "${LANGFUSE_SALT:-biome-langfuse-salt-change-me}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/public/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ----------------------------------------------------------
+  # Biome FastAPI backend (Phase 5+)
+  # ----------------------------------------------------------
   api:
     build: .
+    container_name: biome-api
     working_dir: /app
     command: >
-      sh -c "python scripts/seed_index.py --validate-only ||
-             python scripts/seed_index.py &&
-             uvicorn biome_rag.api.app:app --host 0.0.0.0 --port 8000 --workers 1"
+      sh -c "uvicorn biome_rag.api.app:app --host 0.0.0.0 --port 8000 --workers 1"
     volumes:
       - ./data:/app/data
     ports:
       - "8000:8000"
     env_file:
       - .env
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
@@ -38,11 +139,12 @@ services:
       retries: 3
       start_period: 30s
 
-  # ------------------------------------------------------------------
-  # Streamlit dashboard
-  # ------------------------------------------------------------------
+  # ----------------------------------------------------------
+  # Streamlit dashboard (legacy — to be replaced by React, Phase 5)
+  # ----------------------------------------------------------
   dashboard:
     build: .
+    container_name: biome-dashboard
     working_dir: /app
     command: streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true
     ports:
@@ -57,4 +159,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  data:
+  qdrant_data:
+  redis_data:
+  ollama_models:
+  langfuse_db_data:

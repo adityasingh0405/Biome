@@ -4,7 +4,7 @@ import json
 import logging
 from pathlib import Path
 
-from .metrics import answer_correctness, citation_accuracy, faithfulness, retrieval_relevance
+from .metrics import answer_correctness, citation_accuracy, faithfulness, mean_reciprocal_rank, precision_at_k, retrieval_relevance
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +99,8 @@ def generate_report(eval_path: Path, output_path: Path) -> dict[str, object]:
             "faithfulness": faithfulness(predicted_answer, context),
             "retrieval_relevance": retrieval_relevance(retrieved_ids, expected_chunk_ids),
             "citation_accuracy": citation_accuracy(verified_flags, expected_flags) if verified_flags else 0.0,
+            "precision_at_5": precision_at_k(retrieved_ids, expected_chunk_ids, k=5),
+            "mrr": mean_reciprocal_rank(retrieved_ids, expected_chunk_ids),
         }
         rows.append(row)
         logger.info("Evaluated question: %r → correctness=%.3f", question, row["correctness"])
@@ -109,6 +111,8 @@ def generate_report(eval_path: Path, output_path: Path) -> dict[str, object]:
         "mean_faithfulness": round(sum(row["faithfulness"] for row in rows) / n, 3),
         "mean_retrieval_relevance": round(sum(row["retrieval_relevance"] for row in rows) / n, 3),
         "mean_citation_accuracy": round(sum(row["citation_accuracy"] for row in rows) / n, 3),
+        "mean_precision_at_5": round(sum(row["precision_at_5"] for row in rows) / n, 3),
+        "mean_mrr": round(sum(row["mrr"] for row in rows) / n, 3),
     }
 
     payload: dict[str, object] = {"rows": rows, "aggregate": aggregate}

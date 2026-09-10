@@ -1,0 +1,19 @@
+{
+  "arm_id": "hybrid_k10_rerank",
+  "retrieval_mode": "hybrid",
+  "top_k": 10,
+  "rerank": true,
+  "chunk_strategy": "default",
+  "correctness": 0.2062,
+  "faithfulness": 0.5308,
+  "context_precision": 0.7852,
+  "context_recall": 0.6452,
+  "hallucination_score": 0.5614,
+  "answer_relevancy": 0.3452,
+  "semantic_similarity": 0.435,
+  "mrr": 0.5866,
+  "latency_ms": 29214.87250001519,
+  "n_questions": 55,
+  "error": "",
+  "composite_score": 0.4003
+}

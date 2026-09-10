@@ -74,6 +74,8 @@ def _parse_citations(answer_text: str, context_chunks: list[RankedChunk]) -> lis
 
 
 class AnswerBuilder:
+    _ollama_unreachable: bool = False
+
     def __init__(self, confidence_threshold: float | None = None):
         self.settings = get_runtime_settings()
         self.confidence_threshold = (
@@ -81,6 +83,7 @@ class AnswerBuilder:
             if confidence_threshold is not None
             else self.settings.insufficient_confidence_threshold
         )
+
 
     # ------------------------------------------------------------------
     # Public entry point
@@ -97,7 +100,7 @@ class AnswerBuilder:
         if not chunks:
             logger.warning("No retrieval chunks for question: '%s'", question)
             return AnswerResponse(
-                answer="I don't know. No supporting context was found in the indexed documents.",
+                answer="INSUFFICIENT_CONTEXT: I don't know. No supporting context was found in the indexed documents.",
                 citations=[],
                 confidence=ConfidenceScores(0.0, 0.0, 0.0, 0.0),
                 retrieved_chunks=[],
@@ -133,7 +136,7 @@ class AnswerBuilder:
             ]
             return AnswerResponse(
                 answer=(
-                    "I don't know. The retrieved context was insufficient to answer this confidently."
+                    "INSUFFICIENT_CONTEXT: I don't know. The retrieved context was insufficient to answer this confidently."
                     + suggestion_text
                 ),
                 citations=low_citations,
@@ -243,7 +246,7 @@ class AnswerBuilder:
             "1. Cite sources inline using the block number in square brackets, e.g. [1] or [2][3].\n"
             "2. If the context blocks contain the answer, explain it clearly and concisely with citations.\n"
             "3. If the context does NOT contain sufficient information to answer, reply with exactly: "
-            "\"I don't know. The provided context does not contain this information.\"\n"
+            "\"INSUFFICIENT_CONTEXT: I don't know. The provided context does not contain this information.\"\n"
             "4. Never fabricate information. Never use knowledge outside the provided context.\n"
             "5. Multiple citations are allowed for a single claim, e.g. [1][3]."
         )
@@ -263,6 +266,9 @@ class AnswerBuilder:
     def _generate_with_ollama(
         self, question: str, context: str, chunks: list[RankedChunk]
     ) -> str:
+        if AnswerBuilder._ollama_unreachable:
+            return self._fallback_generation(question, chunks)
+
         url = f"{self.settings.ollama_base_url}/api/chat"
         payload = {
             "model": self.settings.ollama_model,
@@ -290,8 +296,10 @@ class AnswerBuilder:
                     return self._fallback_generation(question, chunks)
                 raise requests.exceptions.RequestException(f"HTTP {resp.status_code}")
             except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout) as exc:
+                AnswerBuilder._ollama_unreachable = True
                 logger.warning("Ollama server unreachable (%s). Switching to fast local fallback.", exc)
                 return self._fallback_generation(question, chunks)
+
             except Exception as exc:
                 if attempt > attempts:
                     logger.error("All Ollama attempts failed: %s", exc)
@@ -533,6 +541,7 @@ class AnswerBuilder:
 
     def _is_dont_know(self, text: str) -> bool:
         markers = [
+            "insufficient_context",
             "i don't know", "don't know", "do not know", "no relevant context",
             "insufficient context", "not mentioned", "no supporting context",
             "context does not contain",

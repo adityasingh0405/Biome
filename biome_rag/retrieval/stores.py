@@ -35,5 +35,7 @@ class ChunkStore:
         if hasattr(chunk, "text"):
             return chunk
         if isinstance(chunk, dict):
+            # BUG-007 fix: guarantee chunk_index is always present
+            chunk.setdefault("chunk_index", 0)
             return SimpleNamespace(**chunk)
-        return SimpleNamespace(text=str(chunk))
+        return SimpleNamespace(text=str(chunk), chunk_index=0)

@@ -1,0 +1,19 @@
+{
+  "arm_id": "sparse_k3_no_rerank",
+  "retrieval_mode": "sparse",
+  "top_k": 3,
+  "rerank": false,
+  "chunk_strategy": "default",
+  "correctness": 0.1141,
+  "faithfulness": 0.7167,
+  "context_precision": 0.7212,
+  "context_recall": 0.2704,
+  "hallucination_score": 0.3354,
+  "answer_relevancy": 0.1973,
+  "semantic_similarity": 0.2613,
+  "mrr": 0.3303,
+  "latency_ms": 18310.105399985332,
+  "n_questions": 55,
+  "error": "",
+  "composite_score": 0.3419
+}

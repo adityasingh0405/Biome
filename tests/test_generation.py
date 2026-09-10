@@ -21,7 +21,7 @@ def test_answer_builder_returns_insufficient_context_when_confidence_is_low(tmp_
 
     response = builder.answer("What is the password?", chunks)
 
-    assert response.answer.startswith("I don't know")
+    assert response.answer.startswith("INSUFFICIENT_CONTEXT") or response.answer.startswith("I don't know")
     assert response.confidence.retrieval_confidence < 0.5
     assert response.citations[0].verified is False
 

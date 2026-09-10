@@ -42,7 +42,7 @@ def test_bm25_index_persists_and_reloads(tmp_path):
 class StubDenseAdapter(DenseEmbeddingAdapter):
     def search(self, query: str, chunks: list[object], top_k: int = 5) -> list[tuple[object, float]]:
         dense_order = ["dense-only", "sparse-only"]
-        return [(chunks[dense_order.index(chunk.text)] if chunk.text in dense_order else chunks[0], 0.95) for chunk in []]
+        return [(chunks[dense_order.index(chunk.text)] if chunk.text in dense_order else chunks[0], 0.95) for chunk in chunks]
 
 
 def test_hybrid_retriever_fuses_dense_and_sparse_signals(tmp_path):

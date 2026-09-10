@@ -4,13 +4,94 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "biome-rag"
-version = "0.1.0"
-description = "Phase 1 RAG ingestion and chunking pipeline"
+version = "0.6.0"
+description = "Enterprise-grade RAG pipeline: Docling + bge-m3 + Qdrant + hybrid retrieval + RAGAS evaluation"
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    # Core (always required)
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.6",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.3.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+    "httpx>=0.27.0",
+    # Legacy doc parsing (Phase 0 fallback — kept for existing tests)
     "pypdf>=3.0.0",
+]
+
+[project.optional-dependencies]
+# Phase 1: Docling + Slack ingestion
+ingestion = [
+    "docling>=2.0.0",
+    "PyMuPDF>=1.24.0",
+    "python-docx>=1.1.0",
+    "python-pptx>=0.6.23",
+    "beautifulsoup4>=4.12.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.9",
+    "slack-sdk>=3.29.0",
+    "prefect>=3.0.0",
+]
+# Phase 2: Chonkie chunking
+chunking = [
+    "chonkie[semantic]>=0.3.0",
+]
+# Phase 3: Embeddings + Qdrant
+embeddings = [
+    "FlagEmbedding>=1.2.9",
+    "sentence-transformers>=3.0.0",
+    "torch>=2.2.0",
+    "numpy>=1.26.0",
+    "qdrant-client>=1.10.0",
+]
+# Phase 4: Reranker + BM25
+retrieval = [
+    "scikit-learn>=1.4.0",
+    "rank-bm25>=0.2.2",
+]
+# Phase 5: LLM providers + Redis + Langfuse
+application = [
+    "openai>=1.40.0",
+    "anthropic>=0.34.0",
+    "groq>=0.9.0",
+    "redis>=5.0.0",
+    "langfuse>=2.35.0",
+    "websockets>=12.0",
+]
+# Phase 6-7: Evaluation
+evaluation = [
+    "ragas>=0.1.21",
+    "deepeval>=1.0.0",
+]
+# Dashboard (legacy)
+dashboard = [
+    "streamlit>=1.35.0",
+]
+# All phases
+all = [
+    "biome-rag[ingestion,chunking,embeddings,retrieval,application,evaluation,dashboard]",
+    "chromadb>=0.5.0",
+    "python-multipart>=0.0.9",
+]
+# Development
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: marks tests as requiring external services (Docker, Qdrant, Redis, Postgres)",
+    "slow: marks tests as slow-running",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["biome_rag*"]

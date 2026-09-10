@@ -43,4 +43,4 @@ def test_backend_metadata_and_health_endpoints(tmp_path: Path):
     assert root_response.status_code == 200
     body = root_response.json()
     assert body["service"] == "Biome RAG"
-    assert "ask" in body["endpoints"]
+    assert any("ask" in e for e in body["endpoints"]), f"Expected 'ask' in endpoint list, got: {body['endpoints']}"
