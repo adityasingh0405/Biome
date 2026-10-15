@@ -65,13 +65,9 @@ evaluation = [
     "ragas>=0.1.21",
     "deepeval>=1.0.0",
 ]
-# Dashboard (legacy)
-dashboard = [
-    "streamlit>=1.35.0",
-]
 # All phases
 all = [
-    "biome-rag[ingestion,chunking,embeddings,retrieval,application,evaluation,dashboard]",
+    "biome-rag[ingestion,chunking,embeddings,retrieval,application,evaluation]",
     "chromadb>=0.5.0",
     "python-multipart>=0.0.9",
 ]

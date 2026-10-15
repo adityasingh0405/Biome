@@ -10,6 +10,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from biome_rag.config import get_runtime_settings
 from biome_rag.generation.answering import AnswerBuilder
 from biome_rag.indexing import IndexBuilder
 from biome_rag.ingestion.models import IngestionConfig
@@ -18,6 +19,7 @@ from biome_rag.memory import get_session_store
 from biome_rag.observability import get_tracer
 from biome_rag.retrieval.engine import HybridRetriever
 from biome_rag.retrieval.models import RankedChunk
+from biome_rag.retrieval.router import NL2SQLEngine, QueryRouter, RouteDecision
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,6 +34,7 @@ class AskRequest(BaseModel):
     retrieval_mode: str = "hybrid"
     session_id: str | None = None      # Phase 5: optional session for memory
     access_scope: list[str] | None = None  # Phase 3: ACL filter
+    route_override: str | None = None  # Phase 8: "auto" | "structured" | "semantic"
 
 
 class ChatRequest(BaseModel):
@@ -40,10 +43,11 @@ class ChatRequest(BaseModel):
     session_id: str                    # required for multi-turn memory
     retrieval_mode: str = "hybrid"
     access_scope: list[str] | None = None
+    route_override: str | None = None  # Phase 8: "auto" | "structured" | "semantic"
 
 
 class ChatResponse(BaseModel):
-    """Multi-turn chat response (Phase 5)."""
+    """Multi-turn chat response (Phase 5 & 8)."""
     answer: str
     session_id: str
     citations: list[dict]
@@ -51,6 +55,8 @@ class ChatResponse(BaseModel):
     retrieved_chunks: list[dict]
     trace_id: str | None = None        # Langfuse trace link
     history_length: int = 0
+    route: str = "semantic"            # Phase 8: "structured" | "semantic"
+    sql_query: str | None = None       # Phase 8: executed SQL query
 
 
 class IngestRequest(BaseModel):
@@ -122,6 +128,8 @@ def create_app(
     answer_builder = AnswerBuilder()
     session_store = get_session_store()   # Phase 5: Redis-backed sliding window
     tracer = get_tracer()                 # Phase 5: Langfuse observability
+    query_router = QueryRouter()          # Phase 8: NL2SQL vs RAG classifier
+    nl2sql_engine = NL2SQLEngine()        # Phase 8: Sandboxed SQL engine
 
     def _refresh_retriever():
         nonlocal retriever
@@ -151,6 +159,7 @@ def create_app(
         mode: str,
         access_scope: list[str] | None = None,
         rag_trace=None,
+        route_override: str | None = None,
     ) -> dict:
         import time as _time  # noqa: PLC0415
         if not question.strip():
@@ -160,8 +169,54 @@ def create_app(
                 "confidence": {"retrieval_confidence": 0.0, "citation_coverage": 0.0, "completeness": 0.0, "composite": 0.0},
                 "retrieved_chunks": [],
                 "trace_id": None,
+                "route": "semantic",
+                "sql_query": None,
             }
 
+        # Route evaluation (Phase 8)
+        settings = get_runtime_settings()
+        route = RouteDecision.SEMANTIC
+        if getattr(settings, "nl2sql_enabled", True):
+            if route_override == "structured":
+                route = RouteDecision.STRUCTURED
+            elif route_override == "semantic":
+                route = RouteDecision.SEMANTIC
+            else:
+                route = query_router.classify(question)
+
+        # -------------------------------------------------------------------
+        # Path A: Structured query -> Sandboxed NL2SQL Engine
+        # -------------------------------------------------------------------
+        if route == RouteDecision.STRUCTURED:
+            sql_res = nl2sql_engine.execute(question, requester_scope=access_scope)
+            if rag_trace:
+                rag_trace.update_output(sql_res.answer, sql_res.confidence)
+
+            return {
+                "answer": sql_res.answer,
+                "citations": [
+                    {
+                        "chunk_index": 0,
+                        "text": f"SQL Query: {sql_res.sql_query} (Source: {sql_res.table_name})",
+                        "verified": True,
+                    }
+                ],
+                "confidence": {
+                    "retrieval_confidence": 1.0 if sql_res.row_count > 0 else 0.5,
+                    "citation_coverage": 1.0,
+                    "completeness": 1.0,
+                    "composite": 1.0 if sql_res.row_count > 0 else 0.5,
+                },
+                "retrieved_chunks": [],
+                "trace_id": getattr(rag_trace, "trace_id", None) if rag_trace else None,
+                "route": "structured",
+                "sql_query": sql_res.sql_query,
+                "sql_rows": sql_res.rows,
+            }
+
+        # -------------------------------------------------------------------
+        # Path B: Semantic query -> Hybrid RAG Pipeline
+        # -------------------------------------------------------------------
         t0 = _time.perf_counter()
         try:
             retrieved = retriever.retrieve(question, retrieval_mode=mode, access_scope=access_scope)
@@ -195,6 +250,8 @@ def create_app(
             },
             "retrieved_chunks": [_chunk_to_dict(c) for c in ans.retrieved_chunks],
             "trace_id": getattr(rag_trace, "trace_id", None) if rag_trace else None,
+            "route": "semantic",
+            "sql_query": None,
         }
 
     # -----------------------------------------------------------------------
@@ -205,7 +262,7 @@ def create_app(
     def root():
         return {
             "service": "Biome RAG",
-            "version": "0.6.0",
+            "version": "0.7.0",
             "status": "ok",
             "endpoints": [
                 "POST /v1/ask",
@@ -239,13 +296,14 @@ def create_app(
 
     @app.post("/v1/ask", tags=["query"])
     def ask(request: AskRequest):
-        """Answer a question using the RAG pipeline (with optional Langfuse tracing)."""
+        """Answer a question using the RAG pipeline or NL2SQL (with optional Langfuse tracing)."""
         with tracer.trace(query=request.question, session_id=request.session_id) as t:
             return _build_answer_payload(
                 request.question,
                 request.retrieval_mode,
                 access_scope=request.access_scope,
                 rag_trace=t,
+                route_override=request.route_override,
             )
 
     @app.post("/v1/chat", tags=["query"], response_model=ChatResponse)
@@ -273,6 +331,7 @@ def create_app(
                 request.retrieval_mode,
                 access_scope=request.access_scope,
                 rag_trace=t,
+                route_override=request.route_override,
             )
 
         # Persist this turn to session memory
@@ -288,6 +347,8 @@ def create_app(
             retrieved_chunks=payload["retrieved_chunks"],
             trace_id=payload.get("trace_id"),
             history_length=len(updated_history),
+            route=payload.get("route", "semantic"),
+            sql_query=payload.get("sql_query"),
         )
 
     @app.delete("/v1/session/{session_id}", tags=["query"])

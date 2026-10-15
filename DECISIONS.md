@@ -348,3 +348,45 @@ API bumped to v0.6.0.
 - Hybrid retrieval outperforms single-mode retrieval across all configurations (Avg composite: Hybrid 0.4281 vs Dense 0.4128 vs Sparse 0.3338).
 - Higher `top_k` (k=10) provides better context recall without significantly increasing hallucination.
 
+---
+
+## D023 - Phase 8: NL2SQL Router, Sandboxed Execution & Programmatic ACL
+
+**Query Routing (biome_rag/retrieval/router.py):**
+- Implemented `QueryRouter` with high-precision classification distinguishing `RouteDecision.STRUCTURED` (aggregates, counts, breakdowns, superlatives, groupings) from `RouteDecision.SEMANTIC` (how-to, policy explanation, semantic search).
+- Avoids costly LLM routing latency on structured queries while preserving deterministic classification speed.
+- Supports explicit `route_override` ("auto" | "structured" | "semantic") via API requests.
+
+**Sandboxed SQL Execution (NL2SQLEngine):**
+- Strict read-only `SELECT` guard rejecting mutation keywords (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `TRUNCATE`, `GRANT`, `REVOKE`, etc.).
+- Multi-statement guard rejects semicolons (`;`) and comment tokens (`--`, `/*`) to prevent stacked SQL injection.
+- Enforces strict query execution timeout (default 5.0s) and hard row limit cap (default `LIMIT 50`).
+
+**Programmatic Row-Level ACL Enforcement:**
+- Does not rely on the LLM to remember row-level security.
+- Replaces table reference `FROM enterprise_tickets` with a secured subquery `FROM (SELECT * FROM enterprise_tickets WHERE lower(department) IN (...)) AS enterprise_tickets`.
+- This ensures all aggregate operations (`COUNT(*)`, `GROUP BY`, `WHERE`, `SUM`) execute strictly over the requester's authorized scope without SQL syntax errors or scope leakage.
+
+**API Integration:**
+- Extended `/v1/ask` and `/v1/chat` with `route_override` and returned fields `route` and `sql_query`.
+- Formats tabular results as Markdown tables with verified citation to the database table.
+
+---
+
+## D024 - Frontend Modernization: Streamlit Deprecation & React + Vite Architecture
+
+**Context & Motivation:**
+- The legacy Streamlit prototype (`streamlit_app.py`) provided quick prototyping but suffered from server-side rerun latency, lack of modern responsive glassmorphic aesthetics, and inability to present an engaging business landing page alongside production features.
+- Replaced Streamlit with a modern **React 18 + Vite + Tailwind CSS v4** single-page application located in `frontend/`.
+
+**Architecture & Key Capabilities:**
+- **Business Landing Page**: Attention-catching dark theme with green (`emerald-500` / `#10B981`) primary accents, ambient gradients, interactive business ROI & savings calculator (dynamically computing annual dollars saved, hours reclaimed, and payback multiples), an interactive 6-stage architecture tour (Docling, Chonkie, BGE-M3, Qdrant RRF, Cross-Encoder, Citations), and an 18-arm ablation benchmark showcase.
+- **In-App Feature Studio**:
+  - *Neural Copilot (Chat)*: Multi-turn conversational interface with Redis session persistence (`/v1/chat`), routing tags (`structured` vs `semantic`), verified inline citation tags (`[1✓]`), and confidence radar breakdown.
+  - *Hybrid vs Dense Arena*: Split-screen comparison query tester calling `/v1/compare`.
+  - *NL2SQL & ACL Studio*: Interactive SQL execution against `enterprise_tickets` with live schema browser and simulated row-level ACL.
+  - *Knowledge Base*: Multi-source document catalog (`/v1/documents`), drag-and-drop file uploader, directory crawler, and raw snippet ingestor.
+  - *18-Arm Ablation Explorer*: Filterable table of all 18 arms from `ABLATION_RESULTS.md`.
+- **Codebase Cleanliness**: Removed `streamlit_app.py`, removed `streamlit` from `requirements.txt` and `pyproject.toml`, and updated `docker-compose.yml` to replace the Streamlit service with a containerized React frontend.
+
+

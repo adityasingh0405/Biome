@@ -147,6 +147,13 @@ class Settings(BaseSettings):
     max_context_tokens: int = 1500
 
     # ------------------------------------------------------------------ #
+    # NL2SQL & Router (Phase 8)                                            #
+    # ------------------------------------------------------------------ #
+    nl2sql_enabled: bool = True
+    nl2sql_timeout_seconds: float = 5.0
+    nl2sql_max_rows: int = 50
+
+    # ------------------------------------------------------------------ #
     # Misc                                                                 #
     # ------------------------------------------------------------------ #
     fallback_keyword_threshold: float = 0.5

@@ -180,12 +180,19 @@ When loading from `chunks.json`, if a dict has no `chunk_index` key, `engine.py:
 - [x] eval/ablation_results.json (machine-readable results)
 - [x] tests/test_phase7_ablation.py (unit test suite for Phase 7)
 
-### Phase 8 — Not Started (Optional)
-- [ ] retrieval/router.py -> NL2SQL vs RAG classifier
+### Phase 8 — Completed
+- [x] retrieval/router.py -> QueryRouter + NL2SQLEngine
+- [x] Sandboxed SQL execution (SELECT-only guard, timeout, LIMIT 50)
+- [x] Programmatic row-level ACL enforcement (requester_scope)
+- [x] API integration: /v1/ask and /v1/chat route-aware
+- [x] tests/test_phase8_nl2sql.py (comprehensive unit & integration tests)
 
-### Phase 9 — Not Started
-- [ ] SETUP_INTEGRATIONS.md
-- [ ] Final README.md
+### Phase 9 — Completed
+- [x] SETUP_INTEGRATIONS.md (complete guide for all services, env vars, and credentials)
+- [x] Final README.md (full architecture, quickstart, phase reproduction, and benchmarks)
+- [x] .env.example finalized with 100% parity across codebase settings
+- [x] scripts/setup_system.py (one-command setup and index verification)
+
 
 ---
 
@@ -225,8 +232,8 @@ When loading from `chunks.json`, if a dict has no `chunk_index` key, `engine.py:
 | Phase 5 | Full round-trip via curl + browser + streaming | Complete |
 | Phase 6 | python -m evaluation.ragas_eval outputs scored table | Complete |
 | Phase 7 | ABLATION_RESULTS.md with real numbers | Complete |
-| Phase 8 | 5 aggregate queries answered correctly (Optional) | Not Yet |
-| Phase 9 | Fresh clone + .env + docker compose up + one script = working system | Not Yet |
+| Phase 8 | 5 aggregate queries answered correctly (Optional) | Complete |
+| Phase 9 | Fresh clone + .env + docker compose up + one script = working system | Complete |
 
 
 ## Phase 0 Changes Applied (All Complete)

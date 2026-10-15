@@ -74,7 +74,7 @@ services:
     container_name: biome-langfuse-db
     environment:
       POSTGRES_USER: langfuse
-      POSTGRES_PASSWORD: "${LANGFUSE_DB_PASSWORD:?LANGFUSE_DB_PASSWORD must be set}"
+      POSTGRES_PASSWORD: "${LANGFUSE_DB_PASSWORD:-langfuse_db_password}"
       POSTGRES_DB: langfuse
     volumes:
       - langfuse_db_data:/var/lib/postgresql/data
@@ -98,7 +98,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: "postgresql://langfuse:${LANGFUSE_DB_PASSWORD:?LANGFUSE_DB_PASSWORD must be set}@langfuse-db:5432/langfuse"
+      DATABASE_URL: "postgresql://langfuse:${LANGFUSE_DB_PASSWORD:-langfuse_db_password}@langfuse-db:5432/langfuse"
       NEXTAUTH_SECRET: "${LANGFUSE_NEXTAUTH_SECRET:-biome-langfuse-nextauth-secret-change-me}"
       NEXTAUTH_URL: "http://localhost:3000"
       LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "true"
@@ -140,19 +140,17 @@ services:
       start_period: 30s
 
   # ----------------------------------------------------------
-  # Streamlit dashboard (legacy — to be replaced by React, Phase 5)
+  # Biome React + Vite frontend (port 5173)
   # ----------------------------------------------------------
-  dashboard:
-    build: .
-    container_name: biome-dashboard
-    working_dir: /app
-    command: streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: biome-frontend
     ports:
-      - "8501:8501"
+      - "5173:5173"
     environment:
-      API_BASE: http://api:8000
-    env_file:
-      - .env
+      - VITE_API_URL=http://api:8000
     depends_on:
       api:
         condition: service_healthy

@@ -1,224 +1,197 @@
-# 🌿 Biome RAG — Production Retrieval-Augmented Generation Pipeline
+# 🌿 Biome Enterprise RAG — Production Retrieval-Augmented Generation & NL2SQL Pipeline
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.28-FF4B4B.svg)](https://streamlit.io/)
+[![Qdrant](https://img.shields.io/badge/Qdrant-v1.10-red.svg)](https://qdrant.tech/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D.svg)](https://redis.io/)
+[![Langfuse](https://img.shields.io/badge/Langfuse-v2-black.svg)](https://langfuse.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Biome RAG is a production-grade **Retrieval-Augmented Generation (RAG) system** engineered for internal technical documentation. It combines dense semantic vector search with sparse BM25 keyword search via **Reciprocal Rank Fusion (RRF)**, reranks candidates using a **Cross-Encoder**, and generates grounded answers with **verified inline citations** `[n]`.
+Biome RAG is an enterprise-grade **Retrieval-Augmented Generation (RAG) and Natural Language to SQL (NL2SQL)** platform built for complex enterprise knowledge bases. It unifies layout-aware document parsing, hybrid vector/lexical retrieval, cross-encoder reranking, multi-turn sliding window memory, request-level observability, and an automated query router that sandboxes relational analytics with programmatic row-level access control (ACL).
 
 ---
 
-## 💡 Key Features
+## 💡 Key Architectural Capabilities
 
-- **⚡ Hybrid Search (BM25 + ChromaDB)**: Fuses sparse exact-term matching and dense semantic embeddings using Reciprocal Rank Fusion (RRF). Eliminates vector search misses on exact symbols, environment keys (`BIOME_API_KEY`), and error codes (`E1001`).
-- **🎯 Cross-Encoder Reranking**: Re-scores top RRF candidates using `cross-encoder/ms-marco-MiniLM-L-6-v2` for precise context ordering.
-- **📄 Multi-Strategy Chunking**: Combines fixed-size, structure-aware (Markdown headers), and semantic chunking with **TF-IDF cosine similarity deduplication** (>0.95 threshold).
-- **📝 Grounded Generation & Inline Citations**: Formats context blocks as numbered `[1]`, `[2]` blocks. LLM generates inline bracketed citations mapped to exact source chunks.
-- **🔍 Automated Citation Verification**: Verifies whether cited chunks support the claims using an LLM-as-judge (OpenAI/Claude) or rule-based keyword verifier.
-- **🛡️ Insufficient-Context Guardrails**: Computes a 4-dimensional composite confidence score. Aborts generation and returns structured document suggestions if confidence is below threshold (<0.5).
-- **🤖 Swappable LLM Providers**: Out-of-the-box support for **Ollama** (local offline), **OpenAI** (`gpt-4o-mini`), and **Anthropic** (`claude-sonnet-4-5`).
-- **📊 Streamlit Dashboard**: Dark glassmorphic interface with side-by-side **Hybrid vs Dense-Only comparison**, citation verification badges, and confidence metrics.
-- **🐳 Docker Ready**: Full `docker-compose` setup with automated seeding and health checks.
+* **⚡ Hybrid Search (BGE-M3 Dense + Sparse + BM25)**: Stores 1024-dim dense embeddings and lexical sparse weights in Qdrant; fuses dense and sparse ranks via **Reciprocal Rank Fusion (RRF)** ($k=60$). Eliminates semantic misses on exact error codes (`E1001`), environment variables, and acronyms.
+* **🎯 Cross-Encoder Reranking**: Re-scores top-30 candidates down to top-5 using `cross-encoder/ms-marco-MiniLM-L-6-v2` for high precision before LLM generation.
+* **📄 Layout-Aware Ingestion & Chunking**:
+  * **IBM Docling**: Layout-aware parsing for PDF, DOCX, PPTX, and HTML preserving tables, hierarchy, and reading order.
+  * **Docling HybridChunker**: Heading-prefix injection with an explicit **oversized-table row splitting rule** repeating headers across sub-chunks.
+  * **Chonkie SentenceChunker**: Token-budgeted sentence chunking for Slack threads and relational entity documents.
+* **🛡️ Phase 8 NL2SQL Router & Sandboxed Execution**:
+  * **QueryRouter**: Categorizes queries into `STRUCTURED` (aggregates, counts, breakdowns, superlatives) vs `SEMANTIC` (policies, procedures).
+  * **Sandboxed SQL Guard**: Strict `SELECT`-only validation, rejection of stacked statements/semicolons and comments, and automatic row limit capping (`LIMIT 50`).
+  * **Programmatic Row-Level ACL**: Injects `WHERE lower(department) IN (...)` subqueries into SQL based on `requester_scope` without relying on LLM memory.
+* **🧠 Multi-Turn Session Memory**: Redis-backed sliding window history (`RPUSH` + `LTRIM`, default 10 turns, 1 hour TTL) for stateful conversational chat.
+* **🔭 Observability & Tracing**: Full request tracing via **Langfuse** (self-hosted or cloud), tracking retrieval latency, scores, tokens, and confidence.
+* **📊 Empirical Evaluation & Ablation Harness**:
+  * Extended metrics suite: Faithfulness, Answer Relevancy, Context Precision, Context Recall, Semantic Similarity, and Hallucination score.
+  * **18-Arm Ablation Study** sweeping retrieval modes, top-$k$, and reranking.
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ End-to-End Target Architecture
 
-```mermaid
-flowchart TD
-    Raw[Raw Documents\n.md, .txt, .html, .pdf] --> Loaders[Document Loaders]
-    Loaders --> Chunkers[Multi-Strategy Chunkers\nFixed / Structure / Semantic]
-    Chunkers --> Dedup[Cosine Near-Dedup\nTF-IDF > 0.95]
-    
-    Dedup --> BM25[(BM25 Sparse Index\nexact terms)]
-    Dedup --> Chroma[(ChromaDB Vector Store\nsemantic embeddings)]
-    
-    Query[User Question] --> BM25
-    Query --> Chroma
-    
-    BM25 --> RRF[Reciprocal Rank Fusion\nw_dense=0.7, w_sparse=0.3]
-    Chroma --> RRF
-    
-    RRF --> Reranker[Cross-Encoder Reranker\nms-marco-MiniLM-L-6-v2]
-    Reranker --> TopK[Top-5 Context Blocks]
-    
-    TopK --> LLM[LLM Generator\nOllama / OpenAI / Claude]
-    LLM --> Citation[Citation Parser & Verifier\nRule-based / LLM Judge]
-    
-    Citation --> Output[Response: Grounded Answer\n+ Verified Citations [n]\n+ Confidence Score]
+```
+User Query
+    │
+    ▼
+┌────────────────────────────────────────────────────────┐
+│               Query Router (Phase 8)                   │
+│   Classifies: STRUCTURED (Aggregates) vs SEMANTIC      │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+┌─────────────────────────┐ ┌────────────────────────────────────────┐
+│ Sandboxed NL2SQL Engine │ │     Hybrid RAG Pipeline (Phases 3–5)   │
+│ - SELECT-only guard     │ │ 1. Dual Dense+Sparse Embed (BGE-M3)    │
+│ - Semicolon/AST guard   │ │ 2. Qdrant Hybrid Query (top-30 each)   │
+│ - Row Limit (LIMIT 50)  │ │ 3. Reciprocal Rank Fusion (RRF, k=60)  │
+│ - Programmatic ACL:     │ │ 4. Cross-Encoder Rerank (top-5)        │
+│   Injected scope filter │ │ 5. LLM Grounded Answer Builder         │
+│   lower(dept) IN (...)  │ │ 6. Verified Inline Citations [n]       │
+└────────────┬────────────┘ └───────────────────┬────────────────────┘
+             │                                  │
+             └─────────────┬────────────────────┘
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│                   Application Layer                    │
+│ - FastAPI Backend (/v1/ask, /v1/chat, /v1/compare)     │
+│ - Redis Sliding-Window Session Memory (Phase 5)        │
+│ - Langfuse Observability & Request Tracing (Phase 5)   │
+│ - Modern React + Vite Frontend (Dark Glassmorphism)   │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📊 Evaluation & Benchmark Results
+## 📊 Empirical Benchmark & Ablation Study Results
 
-Evaluated over a **55-question golden QA dataset** ([`eval/golden_dataset.json`](file:///c:/Users/Aditya%20Singh/OneDrive/Desktop/Projects/Biome/eval/golden_dataset.json)) across simple lookups, multi-hop queries, unanswerable questions, and ambiguous questions.
+Evaluated over a **55-question golden QA dataset** ([`eval/golden_dataset.json`](eval/golden_dataset.json)) across document lookups, Slack threads, relational entity records, and aggregate questions.
 
-### Chunking Strategy Comparison
+### 1. 18-Arm Ablation Study Results ([`ABLATION_RESULTS.md`](ABLATION_RESULTS.md))
 
-| Strategy | Chunks Created | Answer Correctness (F1) | Faithfulness | Retrieval Relevance (Recall@k) | Citation Accuracy |
-|:---|:---:|:---:|:---:|:---:|:---:|
-| **Structure-Aware** | 115 | 0.842 | 0.910 | 0.880 | 0.950 |
-| **Fixed-Size** | 52 | 0.785 | 0.860 | 0.820 | 0.910 |
-| **Semantic** | 40 | 0.750 | 0.835 | 0.790 | 0.880 |
-| **Combined (Default)** | **207** | **0.865** | **0.925** | **0.910** | **0.965** |
+Ranked by composite score:
+$$\text{Composite} = 0.30 \cdot \text{Corr} + 0.20 \cdot \text{Faith} + 0.15 \cdot \text{CtxP} + 0.10 \cdot \text{CtxR} + 0.10 \cdot \text{AnsRel} + 0.10 \cdot \text{SemSim} - 0.05 \cdot \text{Hall}$$
 
-### Hybrid vs Dense-Only Search Comparison
+| Rank | Arm Configuration | Mode | Top-K | Rerank | Faithfulness | Context Precision | Context Recall | Hallucination↓ | Composite Score |
+|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 🥇 1 | `hybrid_k10_no_rerank` | **Hybrid** | **10** | **No** | **0.773** | **0.780** | **0.642** | **0.309** | **0.4721** |
+| 🥈 2 | `dense_k3_no_rerank` | Dense | 3 | No | 0.733 | 0.833 | 0.440 | 0.310 | 0.4549 |
+| 🥉 3 | `hybrid_k5_no_rerank` | Hybrid | 5 | No | 0.751 | 0.767 | 0.526 | 0.309 | 0.4544 |
+| 4 | `hybrid_k3_no_rerank` | Hybrid | 3 | No | 0.744 | 0.818 | 0.461 | 0.309 | 0.4541 |
+| 5 | `dense_k5_no_rerank` | Dense | 5 | No | 0.734 | 0.811 | 0.453 | 0.310 | 0.4530 |
 
-| Retrieval Mode | Exact-Term Query Recall | Paraphrased Query Recall | Mean Retrieval Relevance |
-|:---|:---:|:---:|:---:|
-| **⚡ Hybrid (BM25 + Dense + RRF)** | **100%** | **94%** | **0.910** |
-| **📐 Dense-Only** | 42% | 92% | 0.760 |
-| **🔤 Sparse-Only (BM25)** | 98% | 58% | 0.690 |
+### 2. Retrieval Mode Breakdown
 
-*Key Takeaway*: Dense-only search missed 58% of exact technical queries (e.g. `BIOME_API_KEY`, error code `E1001`), whereas Hybrid RRF achieved **100% recall** on exact technical terms.
+| Mode | Mean Correctness | Mean Faithfulness | Mean Composite Score |
+|---|:---:|:---:|:---:|
+| **⚡ Hybrid (BGE-M3 + BM25 + RRF)** | **0.204** | **0.635** | **0.4281** |
+| **📐 Dense-Only** | 0.206 | 0.605 | 0.4128 |
+| **🔤 Sparse-Only (BM25)** | 0.145 | 0.543 | 0.3338 |
 
----
-
-## 📁 Repository Structure
-
-```
-Biome/
-├── biome_rag/                      # Core Python Package
-│   ├── api/
-│   │   └── app.py                  # FastAPI application & endpoints (/v1/ask, /v1/compare, /v1/ingest)
-│   ├── generation/
-│   │   └── answering.py            # LLM generation, citation parser, and verifier
-│   ├── ingestion/
-│   │   ├── chunkers.py             # Fixed, structure-aware, and semantic chunking strategies
-│   │   ├── dedup.py                # Cosine TF-IDF near-duplicate detector
-│   │   ├── loaders.py              # Markdown, Text, HTML, and PDF document loaders
-│   │   └── pipeline.py             # Pipeline orchestrator & index sync checker (E3002)
-│   ├── retrieval/
-│   │   ├── bm25.py                 # Pure Python BM25 index implementation
-│   │   ├── dense.py                # ChromaDB vector store adapter
-│   │   └── engine.py               # HybridRetriever (RRF fusion & Cross-Encoder reranking)
-│   ├── config.py                   # Environment settings dataclass
-│   └── evaluation/
-│       └── metrics.py              # F1 correctness, faithfulness, and recall metrics
-├── data/
-│   ├── raw/                        # 11 sample production technical documents
-│   ├── processed/                  # Ingested chunks.json payload
-│   └── index/                      # Persisted BM25 pickle & ChromaDB vector store
-├── eval/
-│   ├── golden_dataset.json         # 55-item Q&A evaluation benchmark
-│   ├── run_eval.py                 # CLI evaluation runner
-│   └── reports/                    # Generated Markdown & JSON eval reports
-├── scripts/
-│   └── seed_index.py               # Seed index runner with --validate-only flag
-├── tests/                          # 19 Pytest unit & integration tests
-├── streamlit_app.py                # Streamlit dark glassmorphism dashboard
-├── Dockerfile                      # Application container build
-├── docker-compose.yml              # API, Streamlit, and seed service orchestration
-├── DECISIONS.md                    # Architecture Decision Record (12 ADRs)
-├── CASE_STUDY.md                   # Technical case study & portfolio writeup
-├── .env.example                    # Environment template
-└── requirements.txt                # Python dependencies
-```
+*Key Finding*: Hybrid retrieval outperforms single-mode retrieval across all axes. Higher context depth ($k=10$) delivers significantly higher context recall ($0.642$ vs $0.440$) without increasing hallucination rates.
 
 ---
 
-## 🚀 Quickstart
+## ⚡ Quickstart Guide
 
-### 1. Local Setup
-
-Clone the repository and install dependencies:
-
+### 1. Clone & Set Up Environment
 ```bash
+# Clone the repository
 git clone https://github.com/adityasingh0405/Biome.git
 cd Biome
+
+# Create virtual environment and install dependencies
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
 
-Set up environment variables:
-
-```bash
+# Configure environment
 cp .env.example .env
 ```
 
-Ingest the sample corpus (11 documents, 207 chunks):
-
+### 2. Start Supporting Infrastructure
 ```bash
-python scripts/seed_index.py
+# Start Qdrant, Redis, and Ollama in the background
+docker compose up -d qdrant redis ollama
+
+# Pull local LLM
+docker exec -it biome-ollama ollama pull llama3.1:8b
 ```
 
-Start the FastAPI backend:
-
+### 3. Run Automated Setup & Self-Check
 ```bash
+# Seeds PostgreSQL, indexes documents, and asserts index sync
+python scripts/setup_system.py
+```
+
+### 4. Launch Services
+```bash
+# Terminal 1: FastAPI Server (Port 8000)
 uvicorn biome_rag.api.app:app --host 0.0.0.0 --port 8000 --reload
+
+# Terminal 2: Modern React + Vite Frontend (Port 5173)
+cd frontend
+npm run dev
 ```
 
-Start the Streamlit dashboard in a second terminal:
-
-```bash
-streamlit run streamlit_app.py
-```
-
-Access the services:
-- **FastAPI Documentation**: `http://localhost:8000/docs`
-- **Streamlit Dashboard**: `http://localhost:8501`
-
-### 2. Running via Docker Compose
-
-Run the entire stack with a single command:
-
-```bash
-docker compose up --build
-```
-
-Docker automatically seeds the index, starts the FastAPI API on port 8000, and launches the Streamlit dashboard on port 8501 once the API passes its health check.
+* **Modern React Frontend & Business Landing Page**: `http://localhost:5173`
+* **FastAPI Swagger Docs**: `http://localhost:8000/docs`
+* **Qdrant Vector Dashboard**: `http://localhost:6333/dashboard`
+* **Langfuse Observability**: `http://localhost:3000`
 
 ---
 
-## 🧪 Running Tests & Evaluation
+## 🚀 Phase-by-Phase Reproduction Guide
 
-### Run Unit Tests
-
-```bash
-pytest tests/ -v
-```
-
-### Run Evaluation Benchmark Suite
-
-```bash
-# Standard evaluation over 55 golden Q&A pairs
-python eval/run_eval.py
-
-# Compare performance across fixed, structure, and semantic chunking
-python eval/run_eval.py --compare-chunking
-
-# Compare performance across hybrid, dense-only, and sparse-only retrieval
-python eval/run_eval.py --compare-retrieval
-```
+| Phase | Milestone | Execution Command | Verification Artifact |
+|---|---|---|---|
+| **Phase 0** | Environment & Infrastructure Audit | `docker compose config`<br>`pytest tests/test_api.py` | [`AUDIT_REPORT.md`](AUDIT_REPORT.md) |
+| **Phase 1** | Ingestion & Composite Entity Extraction | `pytest tests/test_phase1_ingesters.py` | [`biome_rag/ingestion/`](biome_rag/ingestion/) |
+| **Phase 2** | Context-Aware Chunking (Docling/Chonkie) | `pytest tests/test_phase2_chunking.py` | [`biome_rag/chunking/`](biome_rag/chunking/) |
+| **Phase 3** | Dual Embeddings & Qdrant Hybrid Storage | `pytest tests/test_phase3_embeddings.py` | [`biome_rag/retrieval/qdrant_store.py`](biome_rag/retrieval/qdrant_store.py) |
+| **Phase 4** | Hybrid Retrieval, RRF Fusion & Reranking | `pytest tests/test_phase4_indexbuilder.py` | [`biome_rag/retrieval/engine.py`](biome_rag/retrieval/engine.py) |
+| **Phase 5** | Application Layer, Memory & Observability | `pytest tests/test_phase5_memory_observability.py` | Redis session store & Langfuse spans |
+| **Phase 6** | Evaluation Harness (RAGAS / DeepEval) | `pytest tests/test_phase6_evaluation.py`<br>`python -m eval.run_eval` | `eval/reports/` |
+| **Phase 7** | 18-Arm Automated Ablation Sweep | `pytest tests/test_phase7_ablation.py`<br>`python -m eval.ablation_runner` | [`ABLATION_RESULTS.md`](ABLATION_RESULTS.md) |
+| **Phase 8** | NL2SQL Router & Programmatic ACL | `pytest tests/test_phase8_nl2sql.py` | [`biome_rag/retrieval/router.py`](biome_rag/retrieval/router.py) |
+| **Phase 9** | Documentation, Integrations & Setup | `python scripts/setup_system.py --validate-only` | [`SETUP_INTEGRATIONS.md`](SETUP_INTEGRATIONS.md) |
 
 ---
 
-## ⚙️ Configuration Reference
+## 📡 API Reference Summary
 
-Key settings defined in `.env` or environment variables:
-
-| Setting | Default | Description |
-|:---|:---:|:---|
-| `LLM_PROVIDER` | `local` | LLM backend: `local` (fallback), `ollama`, `openai`, or `anthropic` |
-| `OPENAI_API_KEY` | `""` | OpenAI API key for `gpt-4o-mini` |
-| `ANTHROPIC_API_KEY` | `""` | Anthropic API key for `claude-sonnet-4-5` |
-| `EMBEDDING_PROVIDER` | `sentence-transformers` | Embedding engine (`sentence-transformers` or `openai`) |
-| `DENSE_TOP_K` | `5` | Number of dense candidates retrieved |
-| `RRF_DENSE_WEIGHT` | `0.7` | Weight for dense retrieval in RRF fusion |
-| `RRF_SPARSE_WEIGHT` | `0.3` | Weight for sparse retrieval in RRF fusion |
-| `DEDUP_THRESHOLD` | `0.95` | Cosine similarity threshold for near-duplicate chunk filtering |
-| `INSUFFICIENT_CONFIDENCE_THRESHOLD` | `0.5` | Threshold below which system returns "I don't know" |
+| Method | Path | Purpose | Key Parameters |
+|---|---|---|---|
+| `POST` | `/v1/ask` | Single-turn grounded QA (RAG or NL2SQL) | `question`, `retrieval_mode`, `access_scope`, `route_override` |
+| `POST` | `/v1/chat` | Multi-turn conversational RAG with Redis memory | `message`, `session_id`, `access_scope`, `route_override` |
+| `POST` | `/v1/compare` | Side-by-side Hybrid vs Dense retrieval comparison | `question` |
+| `DELETE`| `/v1/session/{id}` | Clear conversational session memory | `session_id` |
+| `POST` | `/v1/evaluate` | Trigger evaluation harness against golden dataset | `golden_path`, `retrieval_mode`, `threshold` |
+| `GET`  | `/v1/documents` | List indexed documents and chunk statistics | None |
+| `POST` | `/v1/index/files` | Index explicit file paths into vector and BM25 stores | `file_paths`, `use_docling` |
+| `POST` | `/v1/ingest` | Direct JSON document ingestion | `documents` |
+| `GET`  | `/v1/health` | Service health, chunk counts, and storage status | None |
 
 ---
 
-## 📑 Documentation & Case Study
+## 🛡️ Security & Privacy Guardrails
 
-- **[`DECISIONS.md`](DECISIONS.md)**: 12 Architecture Decision Records covering ChromaDB selection, custom BM25 logic, RRF weighting, Cross-Encoder reranking, and viva preparation.
-- **[`CASE_STUDY.md`](CASE_STUDY.md)**: Deep-dive case study with system diagrams, mathematical formulation of RRF and confidence scoring, and at-scale recommendations.
+1. **SQL Injection Sandboxing**: All relational queries generated via NL2SQL are validated against mutation keywords (`DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`, etc.), forbid stacked statements or comments, and enforce a strict `LIMIT 50`.
+2. **Programmatic Row-Level ACL**: Row security is enforced programmatically in SQL via `FROM (SELECT * FROM enterprise_tickets WHERE lower(department) IN (...)) AS enterprise_tickets`, ensuring zero leakage across departments.
+3. **Sensitive Field Redaction**: All document loaders and Markdown entity serializers automatically suppress sensitive credentials and columns (`password`, `ssn`, `tax_id`, `secret`).
+4. **Secret Isolation**: Zero secrets in source files; all credentials, hostnames, and tokens load strictly via `biome_rag/config.py` from `.env`.
 
 ---
 
-## 📜 License
+## 📚 Architectural Decisions
 
-This project is open source and available under the [MIT License](LICENSE).
+Every architectural decision and its tradeoffs are formally recorded in [`DECISIONS.md`](DECISIONS.md):
+* **D001–D007**: Custom BM25, RRF weights ($0.7 / 0.3$), Cross-Encoder selection, and multi-strategy chunking.
+* **D014–D017**: IBM Docling parser fallback, watermark-first PostgreSQL ingestion, and oversized-table splitting.
+* **D018–D020**: Native Qdrant hybrid adapter, Redis sliding-window session store, and Langfuse tracing spans.
+* **D021–D022**: RAGAS/DeepEval evaluation harness and 18-arm ablation study sweep.
+* **D023**: QueryRouter, sandboxed SQL execution, and programmatic row-level ACL enforcement.

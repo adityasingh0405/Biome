@@ -17,6 +17,12 @@ from biome_rag.retrieval.embeddings import BGE_M3Encoder
 from biome_rag.retrieval.engine import HybridRetriever, Reranker, reciprocal_rank_fusion
 from biome_rag.retrieval.models import RankedChunk
 from biome_rag.retrieval.qdrant_store import QdrantAdapter
+from biome_rag.retrieval.router import (
+    NL2SQLEngine,
+    QueryRouter,
+    RouteDecision,
+    StructuredQueryResult,
+)
 from biome_rag.retrieval.stores import ChunkStore
 
 __all__ = [
@@ -24,6 +30,11 @@ __all__ = [
     "HybridRetriever",
     "Reranker",
     "reciprocal_rank_fusion",
+    # Router & NL2SQL (Phase 8)
+    "QueryRouter",
+    "NL2SQLEngine",
+    "RouteDecision",
+    "StructuredQueryResult",
     # Models
     "RankedChunk",
     # Adapters
