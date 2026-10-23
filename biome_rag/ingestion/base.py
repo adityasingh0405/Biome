@@ -1,4 +1,4 @@
-"""Base Ingester ABC with incremental (watermark-based) ingestion support.
+-"""Base Ingester ABC with incremental (watermark-based) ingestion support.
 
 Phase 1 requirement: every ingester must accept a ``since: datetime | None``
 parameter so that incremental runs can skip already-seen documents without
