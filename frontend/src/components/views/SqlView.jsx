@@ -18,6 +18,7 @@ export default function SqlView() {
   const [accessScope, setAccessScope] = useState(['engineering', 'support']);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
 
   const sampleQueries = [
@@ -31,11 +32,13 @@ export default function SqlView() {
     const q = qText || query;
     if (!q.trim() || loading) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await askQuestion(q, 'hybrid', accessScope, 'structured');
       setResult(res);
     } catch (err) {
       console.error("SQL query error:", err);
+      setError(err.message || 'Query failed — check backend connection and access scope.');
     } finally {
       setLoading(false);
     }
@@ -141,6 +144,14 @@ export default function SqlView() {
           ))}
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="p-4 rounded-2xl border border-red-500/40 bg-red-500/10 text-red-300 text-sm flex items-start gap-2">
+          <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0 text-red-400" />
+          <span><strong>Query failed:</strong> {error}</span>
+        </div>
+      )}
 
       {/* Results Container */}
       {result && (

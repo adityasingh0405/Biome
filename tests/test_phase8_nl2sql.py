@@ -214,11 +214,40 @@ class TestProgrammaticACL:
         sql = "SELECT COUNT(*) AS count FROM enterprise_tickets"
         assert self.engine.apply_acl(sql, requester_scope=["*"]) == sql
         assert self.engine.apply_acl(sql, requester_scope=["admin"]) == sql
-        assert self.engine.apply_acl(sql, requester_scope=None) == sql
 
-    def test_generic_internal_scope_alone_bypasses_injection(self):
+    def test_none_scope_raises_value_error(self):
+        """Security: apply_acl with None scope must FAIL CLOSED (not return unfiltered SQL)."""
         sql = "SELECT COUNT(*) AS count FROM enterprise_tickets"
-        assert self.engine.apply_acl(sql, requester_scope=["internal"]) == sql
+        with pytest.raises(ValueError, match="requester_scope must be provided"):
+            self.engine.apply_acl(sql, requester_scope=None)
+
+    def test_empty_list_scope_raises_value_error(self):
+        """Security: apply_acl with empty list must FAIL CLOSED."""
+        sql = "SELECT COUNT(*) AS count FROM enterprise_tickets"
+        with pytest.raises(ValueError, match="requester_scope must be provided"):
+            self.engine.apply_acl(sql, requester_scope=[])
+
+    def test_injection_in_scope_value_raises_value_error(self):
+        """Security: scope values with SQL meta-characters must be rejected."""
+        sql = "SELECT COUNT(*) AS count FROM enterprise_tickets"
+        malicious_scopes = [
+            ["engineering') OR 1=1 --"],
+            ["'; DROP TABLE enterprise_tickets; --"],
+            ["admin' /*"],
+            ["hr\"; DROP TABLE enterprise_tickets; --"],
+        ]
+        for bad_scope in malicious_scopes:
+            with pytest.raises(ValueError, match="forbidden characters"):
+                self.engine.apply_acl(sql, requester_scope=bad_scope)
+
+    def test_generic_internal_scope_alone_raises_value_error(self):
+        """Security: sentinel-only scopes ('internal', 'public') with no department must FAIL CLOSED."""
+        sql = "SELECT COUNT(*) AS count FROM enterprise_tickets"
+        with pytest.raises(ValueError, match="ambiguous sentinel values"):
+            self.engine.apply_acl(sql, requester_scope=["internal"])
+
+        with pytest.raises(ValueError, match="ambiguous sentinel values"):
+            self.engine.apply_acl(sql, requester_scope=["public", "authenticated"])
 
 
 # ---------------------------------------------------------------------------
@@ -231,7 +260,7 @@ class TestAcceptanceQueries:
 
     def test_benchmark_query_1_total_tickets(self, memory_db):
         engine = NL2SQLEngine(engine=memory_db)
-        res = engine.execute("How many total tickets are in the database?")
+        res = engine.execute("How many total tickets are in the database?", requester_scope=["*"])
         assert res.row_count == 1
         assert res.rows[0]["total_tickets"] == 10
         assert "10" in res.answer
@@ -239,14 +268,14 @@ class TestAcceptanceQueries:
 
     def test_benchmark_query_2_department_tickets(self, memory_db):
         engine = NL2SQLEngine(engine=memory_db)
-        res = engine.execute("How many tickets belong to the Logistics department?")
+        res = engine.execute("How many tickets belong to the Logistics department?", requester_scope=["*"])
         assert res.row_count == 1
         assert res.rows[0]["ticket_count"] == 4
         assert "4" in res.answer
 
     def test_benchmark_query_3_priority_breakdown(self, memory_db):
         engine = NL2SQLEngine(engine=memory_db)
-        res = engine.execute("What is the breakdown of tickets by priority level?")
+        res = engine.execute("What is the breakdown of tickets by priority level?", requester_scope=["*"])
         assert res.row_count >= 3
         priority_map = {r["priority_level"]: r["ticket_count"] for r in res.rows}
         # In sample rows: Critical=3, High=3, Medium=2, Low=2
@@ -258,7 +287,7 @@ class TestAcceptanceQueries:
 
     def test_benchmark_query_4_resolved_vs_unresolved(self, memory_db):
         engine = NL2SQLEngine(engine=memory_db)
-        res = engine.execute("How many tickets are marked as resolved versus unresolved?")
+        res = engine.execute("How many tickets are marked as resolved versus unresolved?", requester_scope=["*"])
         assert res.row_count == 2
         status_map = {bool(r["resolved"]): r["ticket_count"] for r in res.rows}
         assert status_map[True] == 6
@@ -266,7 +295,7 @@ class TestAcceptanceQueries:
 
     def test_benchmark_query_5_highest_critical_department(self, memory_db):
         engine = NL2SQLEngine(engine=memory_db)
-        res = engine.execute("Which department has the highest number of Critical priority tickets?")
+        res = engine.execute("Which department has the highest number of Critical priority tickets?", requester_scope=["*"])
         assert res.row_count == 1
         assert res.rows[0]["department"] == "Logistics"
         assert res.rows[0]["critical_count"] == 2
@@ -298,9 +327,14 @@ class TestAPIIntegrationPhase8:
         app = create_app(raw_dir=tmp_path / "raw", processed_dir=tmp_path / "processed", storage_dir=tmp_path / "index")
         client = TestClient(app)
 
+        # ACL is now fail-closed: structured queries need an explicit access_scope.
+        # Provide admin scope to bypass the department filter.
         resp = client.post(
             "/v1/ask",
-            json={"question": "How many total tickets are in the database?"},
+            json={
+                "question": "How many total tickets are in the database?",
+                "access_scope": ["*"],
+            },
         )
         assert resp.status_code == 200
         body = resp.json()
@@ -308,6 +342,19 @@ class TestAPIIntegrationPhase8:
         assert body["sql_query"] is not None
         assert "enterprise_tickets" in body["sql_query"]
         assert len(body["citations"]) > 0
+
+    def test_api_structured_query_without_scope_returns_403(self, tmp_path: Path):
+        """Security: structured queries with no access_scope must fail closed with 403."""
+        app = create_app(raw_dir=tmp_path / "raw", processed_dir=tmp_path / "processed", storage_dir=tmp_path / "index")
+        client = TestClient(app)
+
+        resp = client.post(
+            "/v1/ask",
+            json={"question": "How many total tickets are in the database?"},
+        )
+        assert resp.status_code == 403
+        assert "requester_scope" in resp.json().get("detail", "").lower() or \
+               "scope" in resp.json().get("detail", "").lower()
 
     def test_api_route_override_forces_semantic(self, tmp_path: Path):
         app = create_app(raw_dir=tmp_path / "raw", processed_dir=tmp_path / "processed", storage_dir=tmp_path / "index")
@@ -334,6 +381,7 @@ class TestAPIIntegrationPhase8:
             json={
                 "message": "What is the breakdown of tickets by priority level?",
                 "session_id": "test_session_p8",
+                "access_scope": ["*"],
             },
         )
         assert resp.status_code == 200

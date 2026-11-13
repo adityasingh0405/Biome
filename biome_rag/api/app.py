@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import shutil
 from pathlib import Path
@@ -9,7 +10,7 @@ from typing import Any
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from biome_rag.config import get_runtime_settings
 from biome_rag.generation.answering import AnswerBuilder
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 class AskRequest(BaseModel):
-    question: str
+    question: str = Field(..., min_length=1, max_length=2000)
     retrieval_mode: str = "hybrid"
     session_id: str | None = None      # Phase 5: optional session for memory
     access_scope: list[str] | None = None  # Phase 3: ACL filter
@@ -88,6 +89,60 @@ class EvaluateRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# CORS helpers
+# ---------------------------------------------------------------------------
+
+def _parse_cors_origins(raw: str) -> list[str]:
+    """Parse a comma-separated CORS_ALLOW_ORIGINS env string into a list.
+
+    Returns ["*"] only if the caller explicitly sets CORS_ALLOW_ORIGINS=*.
+    That should be used only in pure-dev / no-credentials scenarios.
+    """
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    return origins if origins else ["http://localhost:5173"]
+
+
+# ---------------------------------------------------------------------------
+# Path-traversal guard for ingest/index directory endpoints
+# ---------------------------------------------------------------------------
+
+def _resolve_safe_dir(requested: str) -> Path:
+    """Resolve *requested* to an absolute Path and ensure it is safe to use.
+
+    Rules
+    -----
+    1. If the env var ``INGEST_BASE_DIR`` is set, the resolved path must be a
+       descendant of that directory (prevents reading arbitrary host paths).
+    2. If ``INGEST_BASE_DIR`` is not set, only paths that resolve to something
+       under the project ``data/`` directory are allowed.  Callers that need
+       a wider root should set the env var explicitly.
+
+    Raises
+    ------
+    HTTPException 400 — if the path escapes the allowed root.
+    """
+    base_env = os.environ.get("INGEST_BASE_DIR", "")
+    if base_env:
+        base = Path(base_env).resolve()
+    else:
+        # Default safe root: data/ relative to CWD
+        base = Path("data").resolve()
+
+    resolved = Path(requested).resolve()
+    try:
+        resolved.relative_to(base)  # raises ValueError if outside base
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Path '{requested}' is outside the allowed ingest root '{base}'. "
+                "Set INGEST_BASE_DIR env var to allow a different root."
+            ),
+        )
+    return resolved
+
+
+# ---------------------------------------------------------------------------
 # App factory
 # ---------------------------------------------------------------------------
 
@@ -110,7 +165,12 @@ def create_app(
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        # Read allowed origins from env; default to localhost dev origins.
+        # Using ["*"] with allow_credentials=True is rejected by all browsers
+        # (CORS spec §3.2.5) — this was a bug. We now read from env.
+        allow_origins=_parse_cors_origins(
+            os.environ.get("CORS_ALLOW_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+        ),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -189,7 +249,11 @@ def create_app(
         # Path A: Structured query -> Sandboxed NL2SQL Engine
         # -------------------------------------------------------------------
         if route == RouteDecision.STRUCTURED:
-            sql_res = nl2sql_engine.execute(question, requester_scope=access_scope)
+            try:
+                sql_res = nl2sql_engine.execute(question, requester_scope=access_scope)
+            except ValueError as acl_err:
+                # ACL fail-closed: missing/invalid scope → 403 (not 500)
+                raise HTTPException(status_code=403, detail=str(acl_err)) from acl_err
             if rag_trace:
                 rag_trace.update_output(sql_res.answer, sql_res.confidence)
 
@@ -430,7 +494,7 @@ def create_app(
     @app.post("/v1/ingest/directory", tags=["index"])
     def ingest_directory(request: DirectoryIngestRequest):
         """Crawl and index any directory on the local system."""
-        dir_path = Path(request.directory_path)
+        dir_path = _resolve_safe_dir(request.directory_path)
         if not dir_path.exists() or not dir_path.is_dir():
             raise HTTPException(status_code=400, detail=f"Directory '{dir_path}' does not exist.")
 
@@ -474,7 +538,7 @@ def create_app(
     @app.post("/v1/index/files", tags=["index"])
     def index_files(request: DirectoryIngestRequest):
         """Full Phase 1→2→3 indexing from a local directory (IndexBuilder path)."""
-        dir_path = Path(request.directory_path)
+        dir_path = _resolve_safe_dir(request.directory_path)
         if not dir_path.exists() or not dir_path.is_dir():
             raise HTTPException(status_code=400, detail=f"Directory '{dir_path}' does not exist.")
         pattern = "**/*" if request.recursive else "*"

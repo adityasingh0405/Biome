@@ -183,6 +183,10 @@ class NL2SQLEngine:
                 conn.execute(text("SELECT 1"))
             self._engine = eng
             return self._engine
+        except ValueError:
+            # ACL / SQL-guard violations must propagate as access-denied signals,
+            # NOT be silently swallowed into a soft-error result.
+            raise
         except Exception as exc:
             logger.warning(
                 "NL2SQLEngine: cannot initialize or connect with %s (%s). Using SQLite fallback.",
@@ -249,29 +253,70 @@ class NL2SQLEngine:
     # Programmatic ACL Enforcement
     # ------------------------------------------------------------------
 
+    # Characters that are forbidden in *department* scope values to prevent SQL injection.
+    # Admin/bypass tokens ("*", "admin", "all", "superuser") are checked BEFORE this
+    # guard so the wildcard "*" is never subjected to the character filter.
+    _SCOPE_FORBIDDEN = re.compile(r"""['";\\\-]|--+|/\*|\*/""")
+
+    # Tokens that grant unrestricted (bypass) access — checked before injection guard.
+    _BYPASS_TOKENS: frozenset[str] = frozenset({"*", "admin", "all", "superuser"})
+
     def apply_acl(self, sql: str, requester_scope: list[str] | None) -> str:
         """Inject row-level security filters based on requester_scope.
 
-        If requester_scope is None or contains wildcards / administrative tokens
-        ('*', 'admin', 'internal' without department restrictions), no filter is injected.
-        Otherwise, row-level filtering is injected on the primary table.
+        Security contract (FAIL-CLOSED):
+          - If requester_scope is None or empty → raises ValueError; callers must
+            explicitly pass ["*"] or an admin token to bypass the filter.
+          - Only the tokens {"*", "admin", "all", "superuser"} grant unrestricted
+            (bypass) access; they are checked BEFORE the injection-character guard
+            so that "*" is never incorrectly flagged.
+          - Every other scope value is treated as a department filter and must
+            contain only alphanumeric characters, underscores, or hyphens.
+            Any value with SQL meta-characters (quotes, semicolons, comments,
+            backslashes) raises ValueError.
 
         Implementation:
-        Replaces references to ``table_name`` with a secured subquery
-        ``(SELECT * FROM table_name WHERE lower(department) IN ('...')) AS table_name``.
+        Replaces ``FROM <table_name>`` with a secured subquery
+        ``FROM (SELECT * FROM <table_name> WHERE lower(department) IN (...)) AS <table_name>``.
         """
         if not requester_scope:
+            raise ValueError(
+                "apply_acl: requester_scope must be provided. "
+                "Pass ['*'] or an admin token for unrestricted access."
+            )
+
+        norm_scopes: list[str] = [raw.strip().lower() for raw in requester_scope if raw.strip()]
+
+        if not norm_scopes:
+            raise ValueError(
+                "apply_acl: requester_scope must be provided. "
+                "Pass ['*'] or an admin token for unrestricted access."
+            )
+
+        # 1. Check for bypass tokens FIRST (before the injection guard).
+        if any(s in self._BYPASS_TOKENS for s in norm_scopes):
             return sql
 
-        norm_scopes = [s.strip().lower() for s in requester_scope if s.strip()]
-        # Full unrestricted access check
-        if any(s in {"*", "admin", "all", "superuser"} for s in norm_scopes):
-            return sql
+        # 2. Validate department values for SQL-injection characters.
+        for s in norm_scopes:
+            if self._SCOPE_FORBIDDEN.search(s):
+                raise ValueError(
+                    f"apply_acl: scope value '{s}' contains forbidden characters "
+                    "and was rejected to prevent SQL injection."
+                )
 
         dept_scopes = [s for s in norm_scopes if s not in {"internal", "public", "authenticated"}]
         if not dept_scopes:
-            return sql
+            # Sentinel-only scopes with no department → deny access.
+            raise ValueError(
+                "apply_acl: scope contains only ambiguous sentinel values "
+                "('internal', 'public', 'authenticated') with no department — "
+                "access denied. Pass ['*'] for unrestricted access."
+            )
 
+        # Build parameterised-style literal list (SQLite/Postgres don't share
+        # a bind-parameter API here because the subquery is constructed as a
+        # string; the injection guard above makes the values safe to embed).
         quoted_scopes = ", ".join(f"'{s}'" for s in dept_scopes)
         acl_subquery = (
             f"(SELECT * FROM {self.table_name} WHERE lower(department) IN ({quoted_scopes})) AS {self.table_name}"
@@ -412,6 +457,10 @@ class NL2SQLEngine:
                 latency_ms=latency,
             )
 
+        except ValueError:
+            # ACL / SQL-guard violations must propagate as access-denied signals,
+            # NOT be silently swallowed into a soft-error result.
+            raise
         except Exception as exc:
             latency = (time.perf_counter() - t0) * 1000
             logger.error("NL2SQLEngine execution failed: %s", exc)

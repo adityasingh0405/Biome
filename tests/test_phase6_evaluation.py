@@ -495,8 +495,10 @@ class TestPhase6APIEndpoints:
         assert resp.status_code == 400
 
     def test_root_version_is_0_6(self, api_client) -> None:
+        # Version was bumped to 0.7.0 in app.py when Phase 8 (NL2SQL) was added.
+        # The test name is preserved for history; the assertion reflects the actual value.
         resp = api_client.get("/")
-        assert resp.json()["version"] == "0.6.0"
+        assert resp.json()["version"] == "0.7.0"
 
     def test_root_lists_evaluate_endpoint(self, api_client) -> None:
         resp = api_client.get("/")
