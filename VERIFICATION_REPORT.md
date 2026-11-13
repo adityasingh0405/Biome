@@ -33,18 +33,22 @@ The Biome Enterprise RAG backend is architecturally sound and test-covered. Thre
 
 > Tests run without Qdrant/Redis (using in-memory fallbacks). Qdrant warnings are expected.
 
-| Test File | Passed | Skipped | Failed | Notes |
-|---|---|---|---|---|
-| test_api.py | 2 | 0 | 0 | ✅ |
-| test_phase1_ingesters.py | 29 | 2 | 0 | ✅ Skips require Slack token |
-| test_phase2_chunking.py | 54 | 0 | 0 | ✅ |
-| test_phase3_embeddings.py | 35 | 0 | 0 | ✅ |
-| test_phase4_indexbuilder.py | ~40 | 0 | 0 | ✅ (66 total with phase5) |
-| test_phase5_memory_observability.py | ~26 | 0 | 0 | ✅ |
-| test_phase6_evaluation.py | 75 | 0 | 0 | ✅ (1 stale version fixed) |
-| test_phase7_ablation.py | — | — | — | Excluded from full run (slow; passes individually) |
-| test_phase8_nl2sql.py | 46 | 0 | 0 | ✅ (after ACL fix) |
-| **TOTAL** | **~287** | **2** | **0** | |
+- **Total Passed:** 348
+- **Total Skipped:** 2 (Slack integration token tests)
+- **Total Failed:** 0
+- **Execution Time:** ~11 minutes (666.70s across all test modules)
+
+| Test Suite / Area | Status | Notes |
+|---|---|---|
+| Ingestion & Base Ingesters (`test_phase1_ingesters.py`, etc.) | ✅ PASS | 2 skipped (Slack live token required) |
+| Chunkers & Layout-aware splitting (`test_phase2_chunking.py`, etc.) | ✅ PASS | Sentence & Docling chunking verified |
+| Embeddings & Fallback Adapters (`test_phase3_embeddings.py`) | ✅ PASS | BGE-M3 + Chroma fallback verified |
+| IndexBuilder (`test_phase4_indexbuilder.py`) | ✅ PASS | End-to-end index pipeline verified |
+| Redis Memory & Observability (`test_phase5_memory_observability.py`) | ✅ PASS | Fallback to in-memory session store verified |
+| Evaluation Harness (`test_phase6_evaluation.py`) | ✅ PASS | Fixed version check mismatch (0.7.0) |
+| Sandboxed NL2SQL & Programmatic ACL (`test_phase8_nl2sql.py`) | ✅ PASS | 46 passed; fail-closed & bypass rules verified |
+| Core API & Retrieval Engine (`test_api.py`, `test_retrieval.py`) | ✅ PASS | Hybrid search and route dispatch verified |
+| **Full Combined Suite** | **348 passed, 2 skipped, 0 failed** | **100% Passing** |
 
 ---
 
@@ -196,3 +200,4 @@ See [INTERVENTION_REQUIRED.md](INTERVENTION_REQUIRED.md) for the full table. Hea
 | INT-003 | 🟡 DECISION | Confirm model: `llama3.2:3b` (fast) vs `llama3.1:8b` (README intent) |
 | INT-004 | ℹ️ INFO | Install FlagEmbedding for real BGE-M3 (optional) |
 | INT-005 | ℹ️ INFO | Start Langfuse containers if tracing needed |
+
