@@ -33,7 +33,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from .base import Chunker, count_tokens, split_text_by_tokens
+from .base import Chunker, split_text_by_tokens
 from biome_rag.ingestion.models import Chunk
 
 if TYPE_CHECKING:

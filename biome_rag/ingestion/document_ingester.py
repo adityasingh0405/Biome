@@ -24,7 +24,7 @@ from typing import Any
 
 from .base import Ingester, IngestResult
 from .dedup import compute_file_sha256
-from .models import DocumentMetadata, DocumentNode, IngestionSummary
+from .models import DocumentMetadata, DocumentNode
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 import logging

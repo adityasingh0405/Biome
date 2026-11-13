@@ -45,8 +45,7 @@ from typing import TYPE_CHECKING, Any, Generator
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from biome_rag.retrieval.models import RankedChunk
-    from biome_rag.generation.answering import AnswerResponse
+    pass
 
 # langfuse is optional
 try:

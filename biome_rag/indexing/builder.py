@@ -41,10 +41,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Sequence
 
-from biome_rag.chunking import DocumentChunker, TextChunker, get_chunker
-from biome_rag.ingestion.dedup import compute_payload_sha256
+from biome_rag.chunking import DocumentChunker, get_chunker
 from biome_rag.ingestion.document_ingester import DocumentIngester
-from biome_rag.ingestion.models import Chunk, IngestionSummary
+from biome_rag.ingestion.models import Chunk
 from biome_rag.retrieval.bm25 import BM25Index
 
 logger = logging.getLogger(__name__)
