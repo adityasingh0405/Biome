@@ -239,15 +239,14 @@ class AnswerBuilder:
     @staticmethod
     def _system_prompt() -> str:
         return (
-            "You are a precise, factual question-answering assistant. "
-            "Your task is to answer the user's question using ONLY the numbered context blocks provided below.\n\n"
-            "Rules you must follow:\n"
-            "1. Cite sources inline using the block number in square brackets, e.g. [1] or [2][3].\n"
-            "2. If the context blocks contain the answer, explain it clearly and concisely with citations.\n"
-            "3. If the context does NOT contain sufficient information to answer, reply with exactly: "
-            "\"INSUFFICIENT_CONTEXT: I don't know. The provided context does not contain this information.\"\n"
-            "4. Never fabricate information. Never use knowledge outside the provided context.\n"
-            "5. Multiple citations are allowed for a single claim, e.g. [1][3]."
+            "You are a helpful, factual, and concise question-answering assistant for internal documentation.\n"
+            "Your task is to answer the user's question directly using the provided numbered context blocks.\n\n"
+            "Rules:\n"
+            "1. Cite sources inline using the block number in brackets, e.g. [1] or [1][2].\n"
+            "2. If the context contains direct or relevant information, summarize it clearly and helpfully to answer the question.\n"
+            "3. If the context does not contain any relevant information at all to answer the question, state concisely that the provided documentation does not contain this information.\n"
+            "4. Do NOT output a preamble reasoning about why you cannot answer or why the context is insufficient if you already answered part of it.\n"
+            "5. Never fabricate or hallucinate details not found in the context blocks."
         )
 
     @staticmethod
@@ -514,7 +513,7 @@ class AnswerBuilder:
         citation_lower = citation_text.lower()
         if not question_terms:
             return False
-        negations = ["not ", "no ", "never ", "doesn't", "don't", "cannot", "can't"]
+        negations = ["not ", "never ", "doesn't", "don't", "cannot", "can't"]
         if any(neg in citation_lower for neg in negations):
             if any(term in citation_lower for term in question_terms):
                 return False
