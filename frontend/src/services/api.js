@@ -13,7 +13,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 /** Default request timeout in milliseconds */
-const DEFAULT_TIMEOUT_MS = 120_000;
+const DEFAULT_TIMEOUT_MS = 180_000;
 
 /**
  * Thin wrapper around fetch with:

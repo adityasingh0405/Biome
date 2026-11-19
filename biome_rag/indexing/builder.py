@@ -225,14 +225,14 @@ class IndexBuilder:
         result.chunks_per_strategy = self._count_by(chunks, lambda c: c.chunking_strategy)
         result.chunks_per_source_type = self._count_by(chunks, lambda c: c.source_type)
 
-        # Persist chunks.json (keeps ChunkStore compatible)
-        self._persist_chunks_json(chunks)
+        # Persist chunks.json (merges with existing chunks)
+        all_chunks = self._persist_chunks_json(chunks)
 
-        # Phase 3 — BM25 index
+        # Phase 3 — BM25 index on all chunks
         if self.bm25_enabled:
             t0 = time.perf_counter()
             try:
-                n_bm25 = self._phase3_bm25(chunks)
+                n_bm25 = self._phase3_bm25(all_chunks)
                 result.bm25_docs_indexed = n_bm25
             except Exception as exc:
                 logger.error("BM25 indexing failed: %s", exc, exc_info=True)
@@ -272,12 +272,18 @@ class IndexBuilder:
     # ------------------------------------------------------------------
 
     def _phase1_ingest(self, paths: list[Path], source_type: str, since):
-        """Run Phase 1 ingestion on a list of file paths.
+        """Run Phase 1 ingestion on a list of file paths or relational DB rows.
 
-        Groups files by parent directory and runs one DocumentIngester per dir.
-        Paths that live in the same directory are batched together.
+        For source_type="postgresql", uses PostgresIngester to fetch table rows.
+        For source_type="document", groups files by parent directory and runs DocumentIngester.
         """
         from biome_rag.ingestion.base import IngestResult  # noqa: PLC0415
+
+        if source_type == "postgresql":
+            from biome_rag.ingestion.postgres_ingester import PostgresIngester  # noqa: PLC0415
+            pg_ingester = PostgresIngester(max_rows=self.max_rows)
+            res = pg_ingester.ingest(since=since)
+            return res.documents, res.summary
 
         # Group by parent directory
         dirs: dict[Path, list[Path]] = {}
@@ -331,14 +337,15 @@ class IndexBuilder:
     # Phase 3a — BM25
     # ------------------------------------------------------------------
 
-    def _phase3_bm25(self, chunks: list[Chunk]) -> int:
+    def _phase3_bm25(self, chunks: list[Chunk] | list[dict[str, Any]]) -> int:
         """Build/replace the BM25 index from all current chunks."""
         bm25_path = self.storage_dir / "bm25_index.pkl"
         bm25 = BM25Index(bm25_path)
-        bm25.build([c.text for c in chunks])
+        texts = [c.text if hasattr(c, "text") else c.get("text", "") for c in chunks]
+        bm25.build(texts)
         bm25.save()
-        logger.info("BM25 index built: %d documents.", len(chunks))
-        return len(chunks)
+        logger.info("BM25 index built: %d documents.", len(texts))
+        return len(texts)
 
     # ------------------------------------------------------------------
     # Phase 3b — Qdrant
@@ -373,21 +380,37 @@ class IndexBuilder:
     # Persistence helpers
     # ------------------------------------------------------------------
 
-    def _persist_chunks_json(self, chunks: list[Chunk]) -> None:
-        """Write chunks.json for ChunkStore compatibility (existing retrieval path)."""
+    def _persist_chunks_json(self, chunks: list[Chunk]) -> list[dict[str, Any]]:
+        """Write chunks.json for ChunkStore compatibility, merging with existing records."""
         self.processed_dir.mkdir(parents=True, exist_ok=True)
         output_path = self.processed_dir / "chunks.json"
+
+        new_chunk_dicts = [self._chunk_to_dict(c) for c in chunks]
+        merged_chunks = new_chunk_dicts
+
+        if output_path.exists():
+            try:
+                data = json.loads(output_path.read_text(encoding="utf-8"))
+                existing = data.get("chunks", [])
+                new_texts = {c["text"] for c in new_chunk_dicts}
+                # Keep existing chunks that aren't overwritten
+                kept = [c for c in existing if c.get("text") not in new_texts]
+                merged_chunks = kept + new_chunk_dicts
+            except Exception as e:
+                logger.warning("Could not merge with existing chunks.json: %s", e)
+
         payload = {
-            "chunks": [self._chunk_to_dict(c) for c in chunks],
+            "chunks": merged_chunks,
             "summary": {
-                "documents_processed": len({c.source for c in chunks}),
-                "chunks_created": len(chunks),
-                "chunks_per_strategy": self._count_by(chunks, lambda c: c.chunking_strategy),
+                "documents_processed": len({c.get("source") for c in merged_chunks}),
+                "chunks_created": len(merged_chunks),
+                "chunks_per_strategy": self._count_by(merged_chunks, lambda c: c.get("chunking_strategy", "unknown")),
                 "duplicates_skipped": 0,
             },
         }
         output_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-        logger.debug("chunks.json written: %d chunks → %s", len(chunks), output_path)
+        logger.debug("chunks.json written: %d chunks → %s", len(merged_chunks), output_path)
+        return merged_chunks
 
     @staticmethod
     def _chunk_to_dict(chunk: Chunk) -> dict[str, Any]:

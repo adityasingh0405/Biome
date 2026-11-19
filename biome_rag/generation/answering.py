@@ -105,12 +105,21 @@ class AnswerBuilder:
                 retrieved_chunks=[],
             )
 
-        # --- Retrieval confidence from best rerank score ---
+        # --- Retrieval confidence: blend rerank sigmoid + BM25 fused score ---
         max_rerank = max(chunk.rerank_score for chunk in chunks)
         try:
-            retrieval_confidence = 1.0 / (1.0 + math.exp(-max_rerank))
+            rerank_sigmoid = 1.0 / (1.0 + math.exp(-max_rerank))
         except OverflowError:
-            retrieval_confidence = 1.0 if max_rerank > 0 else 0.0
+            rerank_sigmoid = 1.0 if max_rerank > 0 else 0.0
+
+        # BM25/fused score component — normalise fused score to [0,1] range
+        # RRF max score ≈ 1/(60+1) ≈ 0.0164; scale so rank-1 gives ~1.0
+        max_fused = max((getattr(chunk, "fused_score", 0.0) or 0.0) for chunk in chunks)
+        fused_component = min(max_fused * 61.0, 1.0)  # scale: 1/61 → 1.0
+
+        # Blended: 40% rerank sigmoid + 60% fused-score component
+        # Fused-score dominates so good BM25 hits always pass the threshold
+        retrieval_confidence = 0.4 * rerank_sigmoid + 0.6 * fused_component
 
         # --- Early exit if below threshold ---
         if retrieval_confidence < self.confidence_threshold:
@@ -275,7 +284,7 @@ class AnswerBuilder:
                 {"role": "user", "content": self._user_prompt(question, context)},
             ],
             "stream": False,
-            "options": {"temperature": 0.0},
+            "options": {"temperature": 0.0, "num_predict": 350},
         }
         attempts = self.settings.retry_attempts
         timeout = self.settings.ollama_timeout

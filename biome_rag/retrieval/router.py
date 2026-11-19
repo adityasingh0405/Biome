@@ -58,7 +58,7 @@ class QueryRouter:
     breakdowns, counts, and superlatives.
     """
 
-    # Structured keywords & phrasing
+    # Structured keywords & phrasing — routes to NL2SQL / PostgreSQL
     _STRUCTURED_PATTERNS = [
         # Aggregation / Count
         r"\b(how\s+many|count\s+of|total\s+number|number\s+of|total\s+tickets?)\b",
@@ -69,18 +69,30 @@ class QueryRouter:
         r"\b(per\s+department|by\s+department|by\s+priority|by\s+status|by\s+resolved)\b",
         r"\b(group\s+by|grouped\s+by)\b",
         # Listing / structured filtering
-        r"\b(list\s+all\s+tickets|show\s+all\s+tickets|tickets\s+where|which\s+department\s+has)\b",
-        r"\b(resolved\s+versus\s+unresolved|resolved\s+vs\s+unresolved)\b",
-        r"\b(critical\s+priority\s+tickets|tickets\s+marked\s+as)\b",
+        r"\b(list\s+(all\s+)?tickets|show\s+(all\s+)?tickets|tickets\s+where|which\s+department\s+has)\b",
+        r"\b(resolved\s+versus\s+unresolved|resolved\s+vs\.?\s+unresolved)\b",
+        r"\b(critical\s+priority|tickets\s+marked\s+as|high\s+priority\s+tickets?)\b",
+        # Department / table queries
+        r"\b(which\s+department|from\s+(the\s+)?database|in\s+(the\s+)?database)\b",
+        r"\b(show\s+me\s+tickets?|give\s+me\s+(all\s+)?tickets?|fetch\s+tickets?)\b",
+        r"\b(open\s+tickets?|unresolved\s+tickets?|pending\s+tickets?)\b",
+        r"\b(tickets?\s+from|tickets?\s+in|tickets?\s+by|tickets?\s+for)\b",
+        r"\b(department\s+tickets?|logistics|operations|engineering)\s+(tickets?|data|records?)\b",
+        # Statistics / analytics
+        r"\b(statistics|stats|analytics|report|summary)\s+(of|on|for|about)?\s*(tickets?|database|data)\b",
+        r"\b(top\s+\d+|first\s+\d+|last\s+\d+)\s+(tickets?|records?|results?)\b",
+        r"\b(recent\s+tickets?|latest\s+tickets?|newest\s+tickets?)\b",
+        r"\b(what\s+are\s+the\s+tickets?|what\s+tickets?\s+exist|what\s+data\s+is\s+(in|from))\b",
     ]
 
-    # Semantic / unstructured keywords
+    # Semantic / unstructured keywords — routes to RAG / documents
     _SEMANTIC_PATTERNS = [
         r"\b(how\s+do\s+i|how\s+can\s+i|how\s+to)\b",
         r"\b(what\s+is\s+the\s+policy|explain|describe|troubleshoot|troubleshooting)\b",
         r"\b(guide|handbook|instructions?|steps?\s+to|procedure)\b",
         r"\b(what\s+does\s+.*mean|why\s+is|why\s+does)\b",
         r"\b(password\s+reset|vpn|security\s+policy|leave\s+policy)\b",
+        r"\b(deployment|architecture|api\s+reference|documentation|audit\s+log)\b",
     ]
 
     def __init__(self) -> None:
@@ -338,17 +350,33 @@ class NL2SQLEngine:
     # Natural Language to SQL Synthesizer
     # ------------------------------------------------------------------
 
+    # Schema context for LLM SQL generation
+    _TABLE_SCHEMA = """
+Table: enterprise_tickets
+Columns:
+  - ticket_id (VARCHAR, UUID primary key)
+  - department (VARCHAR): one of 'Logistics', 'Operations', 'HR', 'Engineering', 'Customer Support'
+  - route_or_system (VARCHAR): e.g. 'SYS-123'
+  - issue_summary (VARCHAR): short description of the issue
+  - detailed_description (VARCHAR): full description
+  - created_at (TIMESTAMP): when ticket was created
+  - priority_level (VARCHAR): one of 'Low', 'Medium', 'High', 'Critical'
+  - resolved (BOOLEAN): true if resolved, false if open
+"""
+
     def generate_sql(self, query: str) -> str:
-        """Synthesize a read-only SQL query for the requested natural language prompt."""
+        """Synthesize a read-only SQL query. Fast-path regex first, LLM fallback for arbitrary queries."""
         q = query.strip()
         q_lower = q.lower()
         table = self.table_name
 
-        # Query 1: Total tickets count
+        # --- Fast-path hardcoded patterns ---
+
+        # Total tickets count
         if re.search(r"\b(how many total tickets|total number of tickets|total tickets|count of tickets|how many tickets in (the )?database)\b", q_lower):
             return f"SELECT COUNT(*) AS total_tickets FROM {table}"
 
-        # Query 5: Which department has highest critical priority tickets
+        # Which department has highest critical priority tickets
         if re.search(r"\b(which department has (the )?(highest|most)|department with (the )?most critical)\b", q_lower):
             return (
                 f"SELECT department, COUNT(*) AS critical_count "
@@ -359,7 +387,7 @@ class NL2SQLEngine:
                 f"LIMIT 1"
             )
 
-        # Query 3: Priority level breakdown
+        # Priority level breakdown
         if re.search(r"\b(breakdown .* by priority|priority (level )?breakdown|distribution .* priority|tickets by priority)\b", q_lower):
             return (
                 f"SELECT priority_level, COUNT(*) AS ticket_count "
@@ -368,7 +396,7 @@ class NL2SQLEngine:
                 f"ORDER BY ticket_count DESC"
             )
 
-        # Query 4: Resolved vs unresolved
+        # Resolved vs unresolved
         if re.search(r"\b(resolved (versus|vs) unresolved|resolved status|how many .* resolved|tickets .* resolved)\b", q_lower):
             return (
                 f"SELECT resolved, COUNT(*) AS ticket_count "
@@ -377,7 +405,7 @@ class NL2SQLEngine:
                 f"ORDER BY resolved DESC"
             )
 
-        # Query 2: Department-specific ticket count
+        # Department-specific ticket count
         dept_match = re.search(
             r"\b(how many tickets|count of tickets|number of tickets).* (logistics|operations|hr|human resources|engineering|customer support)\b",
             q_lower,
@@ -392,6 +420,35 @@ class NL2SQLEngine:
                 f"WHERE lower(department) = '{dept}'"
             )
 
+        # Open / unresolved tickets
+        if re.search(r"\b(unresolved|open|pending)\s+tickets?\b", q_lower):
+            return (
+                f"SELECT ticket_id, department, priority_level, issue_summary, resolved "
+                f"FROM {table} "
+                f"WHERE resolved = FALSE "
+                f"ORDER BY created_at DESC "
+                f"LIMIT {self.max_rows}"
+            )
+
+        # Resolved tickets
+        if re.search(r"\b(resolved|closed)\s+tickets?\b", q_lower) and not re.search(r"\bvs\b|\bversus\b", q_lower):
+            return (
+                f"SELECT ticket_id, department, priority_level, issue_summary, resolved "
+                f"FROM {table} "
+                f"WHERE resolved = TRUE "
+                f"ORDER BY created_at DESC "
+                f"LIMIT {self.max_rows}"
+            )
+
+        # Recent / latest tickets
+        if re.search(r"\b(recent|latest|newest)\s+tickets?\b", q_lower):
+            return (
+                f"SELECT ticket_id, department, priority_level, issue_summary, created_at, resolved "
+                f"FROM {table} "
+                f"ORDER BY created_at DESC "
+                f"LIMIT {self.max_rows}"
+            )
+
         # Department breakdown
         if re.search(r"\b(breakdown .* by department|department breakdown|tickets by department)\b", q_lower):
             return (
@@ -401,31 +458,128 @@ class NL2SQLEngine:
                 f"ORDER BY ticket_count DESC"
             )
 
-        # Fallback default aggregate
-        if "how many" in q_lower or "count" in q_lower:
-            return f"SELECT COUNT(*) AS count FROM {table}"
+        # --- LLM fallback for arbitrary structured queries ---
+        llm_sql = self._generate_sql_via_llm(query)
+        if llm_sql:
+            return llm_sql
 
-        # Default list query with safe column selection
+        # Last resort: show most recent tickets
         return (
             f"SELECT ticket_id, department, priority_level, issue_summary, resolved "
             f"FROM {table} "
+            f"ORDER BY created_at DESC "
             f"LIMIT {self.max_rows}"
         )
+
+    def _generate_sql_via_llm(self, query: str) -> str | None:
+        """Use the configured LLM to generate a SQL query for arbitrary natural language input.
+
+        Returns a valid SQL string on success, or None if the LLM fails / times out.
+        The result is ALWAYS passed through validate_sql() before execution.
+        """
+        try:
+            settings = get_runtime_settings()
+            prompt = (
+                f"You are a PostgreSQL SQL expert. Generate a single SELECT query for the question below.\n"
+                f"Return ONLY the raw SQL — no explanations, no markdown, no backticks.\n\n"
+                f"Schema:\n{self._TABLE_SCHEMA}\n"
+                f"Rules:\n"
+                f"- SELECT only. Never INSERT/UPDATE/DELETE/DROP.\n"
+                f"- Always end with LIMIT {self.max_rows} unless it is a COUNT/aggregate.\n"
+                f"- Use lower() for string comparisons.\n"
+                f"- For 'open' or 'unresolved' tickets: WHERE resolved = FALSE.\n"
+                f"- For 'resolved' or 'closed' tickets: WHERE resolved = TRUE.\n"
+                f"- For 'recent' or 'latest': ORDER BY created_at DESC. Never add WHERE created_at filters unless the user explicitly specified a date/timeframe.\n"
+                f"- For topic or keyword search: WHERE lower(issue_summary) LIKE '%<keyword>%' OR lower(detailed_description) LIKE '%<keyword>%'.\n"
+                f"- For department search: WHERE lower(department) = '<department>'.\n"
+                f"- Default SELECT columns: ticket_id, department, priority_level, issue_summary, resolved.\n\n"
+                f"Question: {query}\n"
+                f"SQL:"
+            )
+
+            if settings.llm_provider == "ollama":
+                import urllib.request, json as _json
+                payload = _json.dumps({
+                    "model": settings.ollama_model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.0, "num_predict": 120},
+                }).encode()
+                req = urllib.request.Request(
+                    f"{settings.ollama_base_url}/api/generate",
+                    data=payload,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    data = _json.loads(resp.read())
+                    sql_raw = data.get("response", "").strip()
+            else:
+                # OpenAI-compatible fallback
+                import urllib.request, json as _json
+                payload = _json.dumps({
+                    "model": settings.openai_model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.0,
+                    "max_tokens": 120,
+                }).encode()
+                req = urllib.request.Request(
+                    "https://api.openai.com/v1/chat/completions",
+                    data=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {settings.openai_api_key}",
+                    },
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    data = _json.loads(resp.read())
+                    sql_raw = data["choices"][0]["message"]["content"].strip()
+
+            # Strip markdown code fences if LLM wraps it
+            sql_raw = re.sub(r"```(?:sql)?", "", sql_raw, flags=re.IGNORECASE).strip().rstrip("`").strip()
+
+            # Collect all lines from first SELECT/WITH onward (SQL can be multi-line)
+            lines_out: list[str] = []
+            collecting = False
+            for line in sql_raw.splitlines():
+                stripped = line.strip()
+                if not collecting and stripped.upper().startswith(("SELECT", "WITH")):
+                    collecting = True
+                if collecting:
+                    lines_out.append(stripped)
+            sql_raw = " ".join(lines_out).strip()
+
+            if sql_raw and (sql_raw.upper().startswith("SELECT") or sql_raw.upper().startswith("WITH")):
+                logger.info("NL2SQL LLM generated: %s", sql_raw[:300])
+                return sql_raw
+
+        except Exception as exc:
+            logger.warning("NL2SQL LLM generation failed (%s) — using default fallback.", exc)
+
+        return None
 
     # ------------------------------------------------------------------
     # Query Execution & Result Formatting
     # ------------------------------------------------------------------
 
     def execute(self, nl_query: str, requester_scope: list[str] | None = None) -> StructuredQueryResult:
-        """Execute a natural language query end-to-end with sandboxing and ACL enforcement."""
+        """Execute a natural language query end-to-end with sandboxing and ACL enforcement.
+
+        If requester_scope is None (unauthenticated / no ACL context), defaults to ["*"]
+        which grants read access to all departments (bypass the row-level department filter).
+        Pass an explicit department list like ["engineering"] to restrict to that department.
+        """
         t0 = time.perf_counter()
+        # Default to unrestricted read access when no scope is provided
+        effective_scope = requester_scope if requester_scope is not None else ["*"]
 
         try:
             # 1. Generate candidate SQL
             raw_sql = self.generate_sql(nl_query)
 
             # 2. Programmatically apply row-level ACL injection
-            secured_sql = self.apply_acl(raw_sql, requester_scope)
+            secured_sql = self.apply_acl(raw_sql, effective_scope)
 
             # 3. Validate sandboxing rules (SELECT-only, LIMIT, no stacked commands)
             valid_sql = self.validate_sql(secured_sql)
@@ -453,7 +607,7 @@ class NL2SQLEngine:
                 answer=answer,
                 confidence=1.0,
                 table_name=self.table_name,
-                applied_scope=requester_scope,
+                applied_scope=effective_scope,
                 latency_ms=latency,
             )
 
@@ -464,16 +618,17 @@ class NL2SQLEngine:
         except Exception as exc:
             latency = (time.perf_counter() - t0) * 1000
             logger.error("NL2SQLEngine execution failed: %s", exc)
+            raw_sql_safe = locals().get("raw_sql", "N/A")
             return StructuredQueryResult(
                 query=nl_query,
-                sql_query=valid_sql,
+                sql_query=raw_sql_safe,
                 columns=[],
                 rows=[],
                 row_count=0,
                 answer=f"Unable to execute structured query: {exc}",
                 confidence=0.0,
                 table_name=self.table_name,
-                applied_scope=requester_scope,
+                applied_scope=effective_scope,
                 latency_ms=latency,
                 error=str(exc),
             )

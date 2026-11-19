@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     # Ollama
     ollama_model: str = "llama3.1:8b"
     ollama_base_url: str = "http://localhost:11434"
-    ollama_timeout: int = 60
+    ollama_timeout: int = 180
 
     # OpenAI
     openai_api_key: str = ""

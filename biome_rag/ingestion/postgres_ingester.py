@@ -119,8 +119,10 @@ class PostgresIngester(Ingester):
             batch_size: Number of rows to fetch per SQLAlchemy chunk.
             max_rows: Hard cap on total rows (useful for development / testing).
         """
-        self.db_uri: str = db_uri or os.getenv("POSTGRES_URI", "postgresql://localhost:5432/enterprise_rag")
-        self.table_name: str = table_name or os.getenv("POSTGRES_TABLE", "enterprise_tickets")
+        from biome_rag.config import get_runtime_settings
+        settings = get_runtime_settings()
+        self.db_uri: str = db_uri or settings.postgres_uri or os.getenv("POSTGRES_URI", "postgresql://localhost:5432/enterprise_rag")
+        self.table_name: str = table_name or settings.postgres_table or os.getenv("POSTGRES_TABLE", "enterprise_tickets")
         self.join_query: str | None = join_query
         self.default_scope: list[str] = default_scope or ["internal"]
         self.batch_size = batch_size

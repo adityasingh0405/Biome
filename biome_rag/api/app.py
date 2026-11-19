@@ -221,8 +221,10 @@ def create_app(
         access_scope: list[str] | None = None,
         rag_trace=None,
         route_override: str | None = None,
+        retrieval_query: str | None = None,
     ) -> dict:
         import time as _time  # noqa: PLC0415
+        search_query = (retrieval_query or question).strip()
         if not question.strip():
             return {
                 "answer": "Please provide a question.",
@@ -243,14 +245,16 @@ def create_app(
             elif route_override == "semantic":
                 route = RouteDecision.SEMANTIC
             else:
-                route = query_router.classify(question)
+                route = query_router.classify(search_query)
 
         # -------------------------------------------------------------------
         # Path A: Structured query -> Sandboxed NL2SQL Engine
         # -------------------------------------------------------------------
         if route == RouteDecision.STRUCTURED:
             try:
-                sql_res = nl2sql_engine.execute(question, requester_scope=access_scope)
+                # For structured DB queries: default to ["*"] (all departments) when no scope given
+                sql_scope = access_scope if access_scope else ["*"]
+                sql_res = nl2sql_engine.execute(search_query, requester_scope=sql_scope)
             except ValueError as acl_err:
                 # ACL fail-closed: missing/invalid scope → 403 (not 500)
                 raise HTTPException(status_code=403, detail=str(acl_err)) from acl_err
@@ -284,9 +288,9 @@ def create_app(
         # -------------------------------------------------------------------
         t0 = _time.perf_counter()
         try:
-            retrieved = retriever.retrieve(question, retrieval_mode=mode, access_scope=access_scope)
+            retrieved = retriever.retrieve(search_query, retrieval_mode=mode, access_scope=access_scope)
         except TypeError:
-            retrieved = retriever.retrieve(question, retrieval_mode=mode)
+            retrieved = retriever.retrieve(search_query, retrieval_mode=mode)
         retrieval_ms = (_time.perf_counter() - t0) * 1000
 
         if rag_trace:
@@ -397,6 +401,7 @@ def create_app(
                 access_scope=request.access_scope,
                 rag_trace=t,
                 route_override=request.route_override,
+                retrieval_query=request.message,
             )
 
         # Persist this turn to session memory
@@ -560,7 +565,8 @@ def create_app(
             with dest.open("wb") as buf:
                 shutil.copyfileobj(file.file, buf)
             uploaded.append(dest)
-        result = index_builder.run(paths=uploaded, source_type="document")
+        all_paths = [p for p in raw_dir.glob("**/*") if p.is_file()]
+        result = index_builder.run(paths=all_paths, source_type="document")
         _refresh_retriever()
         return {
             "status": "ok",
@@ -574,9 +580,25 @@ def create_app(
         safe_name = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", request.title.strip()) + ".txt"
         dest = raw_dir / safe_name
         dest.write_text(request.content, encoding="utf-8")
-        result = index_builder.run(paths=[dest], source_type="document")
+        all_paths = [p for p in raw_dir.glob("**/*") if p.is_file()]
+        result = index_builder.run(paths=all_paths, source_type="document")
         _refresh_retriever()
         return {"status": "ok", "document": safe_name, **result.to_dict()}
+
+    @app.post("/v1/index/postgres", tags=["index"])
+    def index_postgres(limit: int | None = 200):
+        """Index PostgreSQL table records as searchable documents in hybrid RAG."""
+        builder = IndexBuilder(
+            raw_dir=raw_dir,
+            processed_dir=processed_dir,
+            storage_dir=storage_dir,
+            use_docling=False,
+            use_qdrant=False,
+            max_rows=limit,
+        )
+        result = builder.run(paths=None, source_type="postgresql")
+        _refresh_retriever()
+        return {"status": "ok", **result.to_dict()}
 
     # -----------------------------------------------------------------------
     # /v1/evaluate — Phase 6 evaluation harness
